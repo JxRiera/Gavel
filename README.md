@@ -264,7 +264,18 @@ engine, including the expiry window and the overflow behaviour. They need no ser
 
 CI runs on every push and pull request. It builds, runs the tests, uploads the report, and fails
 if the shaded jar ends up with duplicate zip entries, which Paper's plugin remapper refuses.
-Pushing a `v*` tag publishes a release, and only after the build job has passed.
+
+Releases are driven by the version in `build.gradle.kts`. On a push to `main`, once the build job
+has passed, the workflow reads the version from the jar it just built and publishes a release
+tagged `v<version>` if that tag does not exist yet. Pushes that do not change the version publish
+nothing, so releasing is:
+
+```kotlin
+version = "1.1.0"
+```
+
+commit, push to `main`, done. No tag to create by hand, and the tag can never disagree with the
+jar because both come from the same build.
 
 To stop a red build from being merged, enable branch protection on `main` in the repository
 settings and require the **Build and test** status check. The workflow reports the failure, but
