@@ -317,8 +317,8 @@ public final class Database {
                 }
                 int affected = 0;
                 for (int result : statement.executeBatch()) {
-                    if (result > 0) {
-                        affected += result;
+                    if (result > 0 || result == Statement.SUCCESS_NO_INFO) {
+                        affected++;
                     }
                 }
                 return affected;

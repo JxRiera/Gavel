@@ -118,7 +118,7 @@ public final class PunishmentService {
         placeholders.put("reason", tier.getReason());
         placeholders.put("flags", flags);
 
-        String command = collapseSpaces(fill(template, placeholders));
+        String command = buildCommand(template, placeholders);
 
         if (config.isDebug()) {
             plugin.getLogger().info(staff.getName() + " -> /" + command);
@@ -182,7 +182,7 @@ public final class PunishmentService {
                 if (raw == null || raw.trim().isEmpty()) {
                     continue;
                 }
-                String command = collapseSpaces(fill(raw, placeholders));
+                String command = buildCommand(raw, placeholders);
                 try {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
                 } catch (Throwable ex) {
@@ -223,6 +223,24 @@ public final class PunishmentService {
         });
     }
 
+    static String buildCommand(String template, Map<String, String> placeholders) {
+        if (template == null) {
+            return "";
+        }
+        StringBuilder out = new StringBuilder();
+        for (String token : template.trim().split("\\s+")) {
+            String filled = fill(token, placeholders);
+            if (filled.isEmpty()) {
+                continue;
+            }
+            if (out.length() > 0) {
+                out.append(' ');
+            }
+            out.append(filled);
+        }
+        return out.toString();
+    }
+
     private static String fill(String template, Map<String, String> placeholders) {
         String out = template;
         for (Map.Entry<String, String> entry : placeholders.entrySet()) {
@@ -230,9 +248,5 @@ public final class PunishmentService {
             out = out.replace("%" + entry.getKey() + "%", value);
         }
         return out;
-    }
-
-    private static String collapseSpaces(String input) {
-        return input.replaceAll("\\s{2,}", " ").trim();
     }
 }

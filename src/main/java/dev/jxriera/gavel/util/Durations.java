@@ -74,6 +74,11 @@ public final class Durations {
         return consumed.length() > 0 && consumed.toString().equals(cleaned.replace(" ", ""));
     }
 
+    public static boolean hasElapsed(String duration, long created, long now) {
+        long millis = toMillis(duration);
+        return millis > 0L && now - created >= millis;
+    }
+
     public static String display(String raw, String permanentWord) {
         return isPermanent(raw) ? permanentWord : raw.trim();
     }

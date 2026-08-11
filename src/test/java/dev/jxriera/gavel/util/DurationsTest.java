@@ -69,6 +69,27 @@ class DurationsTest {
     }
 
     @Test
+    void aTemporaryPunishmentElapsesOnceItsDurationIsUp() {
+        long created = 1_000_000L;
+
+        assertFalse(Durations.hasElapsed("15d", created, created));
+        assertFalse(Durations.hasElapsed("15d", created, created + 15L * DAY - 1L));
+        assertTrue(Durations.hasElapsed("15d", created, created + 15L * DAY));
+        assertTrue(Durations.hasElapsed("15d", created, created + 30L * DAY));
+    }
+
+    @Test
+    void aPermanentPunishmentNeverElapses() {
+        assertFalse(Durations.hasElapsed("perm", 0L, Long.MAX_VALUE / 2));
+        assertFalse(Durations.hasElapsed(null, 0L, Long.MAX_VALUE / 2));
+    }
+
+    @Test
+    void anUnparseableDurationNeverElapses() {
+        assertFalse(Durations.hasElapsed("banana", 0L, Long.MAX_VALUE / 2));
+    }
+
+    @Test
     void displayUsesTheConfiguredWordOnlyForPermanent() {
         assertEquals("Permanent", Durations.display("perm", "Permanent"));
         assertEquals("15d", Durations.display("15d", "Permanent"));

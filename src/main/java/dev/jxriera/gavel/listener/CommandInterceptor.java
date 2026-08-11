@@ -5,6 +5,7 @@ import dev.jxriera.gavel.config.ConfigManager;
 import dev.jxriera.gavel.config.Messages;
 import dev.jxriera.gavel.gui.PunishMenu;
 import dev.jxriera.gavel.model.OffenseRecord;
+import dev.jxriera.gavel.util.Durations;
 import dev.jxriera.gavel.util.Sounds;
 import dev.jxriera.gavel.util.Targets;
 import org.bukkit.Bukkit;
@@ -14,6 +15,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.server.RemoteServerCommandEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 
 import java.util.ArrayList;
@@ -119,6 +121,11 @@ public final class CommandInterceptor implements Listener {
         handleRevert(event.getSender(), null, event.getCommand());
     }
 
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onRemoteRevert(RemoteServerCommandEvent event) {
+        handleRevert(event.getSender(), null, event.getCommand());
+    }
+
     private void handleRevert(final CommandSender sender, UUID guardKey, String rawCommand) {
         final ConfigManager config = plugin.config();
         if (!config.isRevertEnabled() || rawCommand == null) {
@@ -169,9 +176,13 @@ public final class CommandInterceptor implements Listener {
             public void run() {
                 final int affected;
                 try {
+                    long now = System.currentTimeMillis();
                     List<Long> ids = new ArrayList<Long>();
                     for (OffenseRecord record : plugin.database().find(key, true)) {
                         if (record.getType() == null || !types.contains(record.getType().toUpperCase())) {
+                            continue;
+                        }
+                        if (Durations.hasElapsed(record.getDuration(), record.getCreated(), now)) {
                             continue;
                         }
                         ids.add(record.getId());

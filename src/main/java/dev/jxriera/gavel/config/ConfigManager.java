@@ -205,10 +205,21 @@ public final class ConfigManager {
         tierFormat = file.getString("menu.tier-format", "");
         tierFormatNext = file.getString("menu.tier-format-next", "");
 
-        historySlot = file.getInt("menu.history-button.slot", -1);
+        historySlot = readButtonSlot(file, "menu.history-button");
         historyIcon = IconSpec.from(file.getConfigurationSection("menu.history-button"), Material.BOOK);
-        closeSlot = file.getInt("menu.close-button.slot", -1);
+        closeSlot = readButtonSlot(file, "menu.close-button");
         closeIcon = IconSpec.from(file.getConfigurationSection("menu.close-button"), Material.BARRIER);
+    }
+
+    private int readButtonSlot(FileConfiguration file, String path) {
+        int slot = file.getInt(path + ".slot", -1);
+        int maxSlot = menuRows * 9 - 1;
+        if (slot > maxSlot) {
+            plugin.getLogger().warning(path + ".slot is " + slot + " but the menu only has "
+                    + (maxSlot + 1) + " slots (0-" + maxSlot + "), hiding the button.");
+            return -1;
+        }
+        return slot;
     }
 
     private void loadCategories(FileConfiguration file) {
@@ -220,6 +231,13 @@ public final class ConfigManager {
             return;
         }
         int maxSlot = menuRows * 9 - 1;
+        Map<Integer, String> takenSlots = new LinkedHashMap<Integer, String>();
+        if (historySlot >= 0) {
+            takenSlots.put(historySlot, "menu.history-button");
+        }
+        if (closeSlot >= 0) {
+            takenSlots.put(closeSlot, "menu.close-button");
+        }
         for (String id : root.getKeys(false)) {
             ConfigurationSection section = root.getConfigurationSection(id);
             if (section == null) {
@@ -229,6 +247,12 @@ public final class ConfigManager {
             if (slot < 0 || slot > maxSlot) {
                 plugin.getLogger().warning("Category '" + id + "': slot " + slot
                         + " is outside the menu (0-" + maxSlot + "), skipping it.");
+                continue;
+            }
+            String owner = takenSlots.get(slot);
+            if (owner != null) {
+                plugin.getLogger().warning("Category '" + id + "': slot " + slot
+                        + " is already used by " + owner + ", skipping it.");
                 continue;
             }
             List<Tier> tiers = readTiers(id, section);
@@ -244,6 +268,7 @@ public final class ConfigManager {
                 permission = null;
             }
             String key = id.toLowerCase(Locale.ROOT);
+            takenSlots.put(slot, "category '" + key + "'");
             loaded.put(key, new Category(key, slot, permission, expire,
                     IconSpec.from(section.getConfigurationSection("icon"), Material.PAPER), tiers));
         }
