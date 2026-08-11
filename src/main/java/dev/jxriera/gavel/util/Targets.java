@@ -30,9 +30,6 @@ public final class Targets {
     @SuppressWarnings("deprecation")
     public static void resolve(final Plugin plugin, final String input, final Callback callback) {
         Player online = Bukkit.getPlayerExact(input);
-        if (online == null) {
-            online = Bukkit.getPlayer(input);
-        }
         if (online != null) {
             callback.done(new Resolved(online.getUniqueId(), online.getName(), true));
             return;
