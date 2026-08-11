@@ -1,0 +1,175 @@
+# Types: BAN, IPBAN, MUTE, WARN, KICK
+# Durations: s m h d w mo y (30m, 15d, 2w, 6mo) or perm
+# Icon placeholders: %target% %offenses% %next_number% %next_type%
+#                    %next_duration% %next_reason% %tiers%
+
+menu:
+  title: '&8Punish &7» &f%target%'
+  rows: 5
+
+  filler:
+    enabled: true
+    material: GRAY_STAINED_GLASS_PANE
+    name: ' '
+
+  # Lines produced by the %tiers% placeholder.
+  tier-format: '&8 • &7#%number% &8» &7%type% %duration%'
+  tier-format-next: '&8 ▶ &e#%number% &8» &f%type% &e%duration%'
+
+  # Set slot to -1 to hide a button.
+  history-button:
+    slot: 40
+    material: BOOK
+    name: '&bHistory of &f%target%'
+    lore:
+      - '&7Records: &f%total%'
+      - ''
+      - '&aClick &7» view details'
+
+  close-button:
+    slot: 44
+    material: BARRIER
+    name: '&cClose'
+    lore: []
+
+categories:
+
+  hacked_client:
+    slot: 10
+    permission: 'gavel.category.hacked_client'
+    icon:
+      material: NETHERITE_SWORD
+      name: '&#ff5555&lHACKED CLIENT'
+      glow: true
+      lore:
+        - '&7Client with illegal modules.'
+        - ''
+        - '&7Previous offences: &f%offenses%'
+        - '%tiers%'
+        - ''
+        - '&7Will apply: &f%next_type% &e%next_duration%'
+        - ''
+        - '&aLeft click &7» apply'
+        - '&eShift + click &7» silent'
+    tiers:
+      - { type: BAN, duration: 15d, reason: 'Hacked Client #1' }
+      - { type: BAN, duration: 25d, reason: 'Hacked Client #2' }
+      - { type: BAN, duration: perm, reason: 'Hacked Client #3' }
+
+  bug_abuse:
+    slot: 11
+    permission: 'gavel.category.bug_abuse'
+    icon:
+      material: REDSTONE_TORCH
+      name: '&#ffaa00&lBUG ABUSE'
+      lore:
+        - '&7Exploiting server bugs.'
+        - ''
+        - '&7Previous offences: &f%offenses%'
+        - '%tiers%'
+        - ''
+        - '&7Will apply: &f%next_type% &e%next_duration%'
+    tiers:
+      - { type: BAN, duration: 7d, reason: 'Bug abuse #1' }
+      - { type: BAN, duration: 30d, reason: 'Bug abuse #2' }
+      - { type: BAN, duration: perm, reason: 'Bug abuse #3' }
+
+  chat_toxicity:
+    slot: 12
+    permission: 'gavel.category.chat_toxicity'
+    icon:
+      material: PAPER
+      name: '&#55ffff&lTOXICITY'
+      lore:
+        - '&7Insults and disrespect in chat.'
+        - ''
+        - '&7Previous offences: &f%offenses%'
+        - '%tiers%'
+        - ''
+        - '&7Will apply: &f%next_type% &e%next_duration%'
+    tiers:
+      - { type: WARN, duration: perm, reason: 'Toxicity #1' }
+      - { type: MUTE, duration: 2h, reason: 'Toxicity #2' }
+      - { type: MUTE, duration: 1d, reason: 'Toxicity #3' }
+      - { type: MUTE, duration: 7d, reason: 'Toxicity #4' }
+      - { type: BAN, duration: 30d, reason: 'Toxicity #5' }
+
+  chat_spam:
+    slot: 13
+    permission: 'gavel.category.chat_spam'
+    icon:
+      material: WRITABLE_BOOK
+      name: '&#aaaaaa&lSPAM / FLOOD'
+      lore:
+        - '&7Flooding the chat.'
+        - ''
+        - '&7Previous offences: &f%offenses%'
+        - '%tiers%'
+    tiers:
+      - { type: MUTE, duration: 15m, reason: 'Spam #1' }
+      - { type: MUTE, duration: 2h, reason: 'Spam #2' }
+      - { type: MUTE, duration: 1d, reason: 'Spam #3' }
+
+  advertising:
+    slot: 14
+    permission: 'gavel.category.advertising'
+    icon:
+      material: OAK_SIGN
+      name: '&#ff55ff&lADVERTISING'
+      lore:
+        - '&7Promoting other servers or services.'
+        - ''
+        - '&7Previous offences: &f%offenses%'
+        - '%tiers%'
+    tiers:
+      - { type: MUTE, duration: 3d, reason: 'Advertising #1' }
+      - { type: BAN, duration: 15d, reason: 'Advertising #2' }
+      - { type: BAN, duration: perm, reason: 'Advertising #3' }
+
+  ban_evasion:
+    slot: 16
+    permission: 'gavel.category.ban_evasion'
+    # Overrides escalation.expire-after for this category only.
+    expire-after: perm
+    icon:
+      material: ENDER_PEARL
+      name: '&#ff5555&lBAN EVASION'
+      lore:
+        - '&7Joining on another account or IP to dodge a punishment.'
+        - ''
+        - '&7Previous offences: &f%offenses%'
+        - '%tiers%'
+    tiers:
+      - { type: IPBAN, duration: 30d, reason: 'Ban evasion #1' }
+      - { type: IPBAN, duration: perm, reason: 'Ban evasion #2' }
+
+  inappropriate_name:
+    slot: 28
+    permission: 'gavel.category.inappropriate_name'
+    icon:
+      material: NAME_TAG
+      name: '&#ffff55&lNAME / SKIN'
+      lore:
+        - '&7Offensive name or skin.'
+        - ''
+        - '&7Previous offences: &f%offenses%'
+        - '%tiers%'
+    tiers:
+      - { type: KICK, duration: perm, reason: 'Inappropriate name - change it' }
+      - { type: BAN, duration: perm, reason: 'Repeated inappropriate name' }
+
+  griefing:
+    slot: 29
+    permission: 'gavel.category.griefing'
+    icon:
+      material: TNT
+      name: '&#ffaa00&lGRIEFING'
+      lore:
+        - '&7Destroying or stealing from other players.'
+        - ''
+        - '&7Previous offences: &f%offenses%'
+        - '%tiers%'
+    tiers:
+      - { type: BAN, duration: 3d, reason: 'Griefing #1' }
+      - { type: BAN, duration: 14d, reason: 'Griefing #2' }
+      - { type: BAN, duration: perm, reason: 'Griefing #3' }

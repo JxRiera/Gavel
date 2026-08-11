@@ -1,0 +1,21 @@
+Gavel
+Copyright 2026 jxriera
+
+This product includes software developed by jxriera.
+https://github.com/jxriera/Gavel
+
+Licensed under the Apache License, Version 2.0. See the LICENSE file.
+
+--------------------------------------------------------------------------------
+
+Third-party components bundled in the distributed jar:
+
+SQLite JDBC Driver (org.xerial:sqlite-jdbc)
+    Apache License, Version 2.0
+
+PostgreSQL JDBC Driver (org.postgresql:postgresql)
+    BSD 2-Clause License
+
+MySQL Connector/J (com.mysql:mysql-connector-j)
+    GNU General Public License, version 2, with the
+    Universal FOSS Exception, version 1.0

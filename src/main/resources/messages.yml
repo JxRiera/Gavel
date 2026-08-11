@@ -1,0 +1,103 @@
+# Supports & colour codes and &#rrggbb hex colours.
+
+prefix: '&8[&#ff5555Gavel&8] &r'
+
+no-permission: '%prefix%&cYou do not have permission to do that.'
+players-only: '%prefix%&cThis can only be used in-game.'
+unknown-player: '%prefix%&cPlayer &f%target% &cnot found.'
+cannot-punish-self: '%prefix%&cYou cannot punish yourself.'
+no-categories: '%prefix%&cYou do not have access to any category.'
+
+opening: '%prefix%&7Opening overlay for &f%target%&7...'
+
+applied: '%prefix%&aApplied &f%type% %duration% &7to &f%target% &8(&7%reason%&8)'
+applied-silent: '%prefix%&aApplied &f%type% %duration% &7to &f%target% &8(&7silent&8)'
+cancelled: '%prefix%&7Punishment cancelled.'
+
+category-no-permission: '%prefix%&cYou do not have permission for category &f%category%&c.'
+missing-litebans-permission: '%prefix%&cYou are missing the LiteBans permission &f%permission%&c, nothing was applied.'
+template-missing: '%prefix%&cMissing command template &f%template% &cin config.yml.'
+db-error: '%prefix%&cDatabase error, check the console.'
+
+reloaded: '%prefix%&aConfiguration reloaded. &7Categories: &f%count%'
+reload-failed: '%prefix%&cReload failed, check the console.'
+cleared: '%prefix%&aCleared &f%count% &7record(s) for &f%target%&7.'
+reverted: '%prefix%&7Escalation rolled back for &f%target%&7: &f%count% &7record(s) no longer count.'
+version: '%prefix%&fGavel &7v%version% &8| &7storage: &f%storage%'
+
+usage: |-
+  %prefix%&7Commands:
+  &8 » &f/gavel <player> &7open the overlay
+  &8 » &f/gavel history <player> &7view history
+  &8 » &f/gavel clear <player> [category] &7reset the escalation counter
+  &8 » &f/gavel reload &7reload the configuration
+
+confirm:
+  title: '&8Confirm &7» &f%target%'
+  info:
+    material: PAPER
+    name: '&fSummary'
+    lore:
+      - '&7Player: &f%target%'
+      - '&7Category: &f%category%'
+      - '&7Offence number: &f#%offense%'
+      - '&7Type: &f%type%'
+      - '&7Duration: &e%duration%'
+      - '&7Reason: &f%reason%'
+      - '&7Silent: &f%silent%'
+  accept:
+    slot: 11
+    material: LIME_WOOL
+    name: '&a&lCONFIRM'
+    lore:
+      - '&7The punishment will be executed.'
+  deny:
+    slot: 15
+    material: RED_WOOL
+    name: '&c&lCANCEL'
+    lore: []
+
+history:
+  title: '&8History &7» &f%target%'
+  empty:
+    material: BARRIER
+    name: '&cNo records'
+    lore:
+      - '&7This player has no punishments'
+      - '&7applied through Gavel.'
+  entry:
+    material: PAPER
+    name: '&f#%index% &8» &e%category%'
+    lore:
+      - '&7Tier: &f%tier%'
+      - '&7Type: &f%type% &7Duration: &e%duration%'
+      - '&7Reason: &f%reason%'
+      - '&7Staff: &f%staff%'
+      - '&7Date: &f%date%'
+      - '&7Server: &f%server%'
+      - '&7Silent: &f%silent%'
+  previous:
+    material: ARROW
+    name: '&e« Previous'
+  next:
+    material: ARROW
+    name: '&eNext »'
+  back:
+    material: BARRIER
+    name: '&cBack'
+
+# Do not rename boolean-true / boolean-false to yes / no: YAML resolves those
+# keys to booleans and the lookup stops matching.
+words:
+  permanent: 'Permanent'
+  boolean-true: 'Yes'
+  boolean-false: 'No'
+  none: '-'
+  unknown: 'Unknown'
+  type-ban: 'Ban'
+  type-ipban: 'IP-Ban'
+  type-mute: 'Mute'
+  type-warn: 'Warning'
+  type-kick: 'Kick'
+
+date-format: 'dd/MM/yyyy HH:mm'

@@ -1,0 +1,130 @@
+# Categories and escalation tiers: categories.yml
+# Player-facing strings: messages.yml
+
+# Stored with every record, useful when several servers share a database.
+server-name: 'main'
+
+intercept:
+  enabled: true
+
+  # Commands that open the overlay instead of running.
+  # The typed reason and duration are discarded.
+  commands:
+    - ban
+    - tempban
+    - ipban
+    - tempipban
+    - mute
+    - tempmute
+    - ipmute
+    - kick
+    - warn
+
+  # Staff with gavel.bypass keep the raw LiteBans command.
+  allow-bypass-permission: true
+
+  deny-self: true
+
+  # Let '/ban' with no player through so LiteBans prints its usage message.
+  passthrough-without-target: true
+
+  # Require the player to have joined at least once.
+  require-known-player: true
+
+execution:
+  # PLAYER: run as the staff member, LiteBans records them as the author.
+  # CONSOLE: run from the console, no permission checks.
+  execute-as: PLAYER
+
+  # Placeholders: %target% %duration% %reason% %flags%
+  commands:
+    ban-temp: 'tempban %flags%%target% %duration% %reason%'
+    ban-perm: 'ban %flags%%target% %reason%'
+    ipban-temp: 'tempipban %flags%%target% %duration% %reason%'
+    ipban-perm: 'ipban %flags%%target% %reason%'
+    mute-temp: 'tempmute %flags%%target% %duration% %reason%'
+    mute-perm: 'mute %flags%%target% %reason%'
+    warn-temp: 'warn %flags%%target% %duration% %reason%'
+    warn-perm: 'warn %flags%%target% %reason%'
+    kick: 'kick %flags%%target% %reason%'
+
+  silent-flag: '-s'
+
+  # Check the LiteBans permission before dispatching. dispatchCommand cannot
+  # report a denial, so without this a refused command still counts as applied.
+  verify-permissions: true
+  permissions:
+    BAN: 'litebans.ban'
+    IPBAN: 'litebans.ipban'
+    MUTE: 'litebans.mute'
+    WARN: 'litebans.warn'
+    KICK: 'litebans.kick'
+
+  # Console commands run after a successful punishment.
+  # Placeholders: %target% %staff% %category% %type% %duration% %reason% %offense%
+  post-commands: []
+
+revert:
+  # Roll the escalation counter back when a punishment is lifted in LiteBans.
+  # The command is not cancelled, LiteBans runs it and Gavel reacts afterwards.
+  enabled: true
+
+  # LATEST rolls back the most recent matching offence, ALL clears every one.
+  scope: LATEST
+
+  # Command -> punishment types whose records it reverts.
+  commands:
+    unban: [BAN]
+    unbanip: [IPBAN]
+    unmute: [MUTE]
+    unmuteip: [MUTE]
+    unwarn: [WARN]
+
+  # Checked when execution.verify-permissions is on and a player runs the command.
+  permissions:
+    unban: 'litebans.unban'
+    unbanip: 'litebans.unbanip'
+    unmute: 'litebans.unmute'
+    unmuteip: 'litebans.unmuteip'
+    unwarn: 'litebans.unwarn'
+
+confirm:
+  enabled: true
+  only-permanent: false
+
+escalation:
+  # How long a past offence keeps counting. 'perm' or 0 never expires.
+  expire-after: perm
+
+  # Past the last tier: LAST repeats it, CYCLE wraps around.
+  on-overflow: LAST
+
+database:
+  # AUTO: reuse the LiteBans database on MySQL, MariaDB or PostgreSQL,
+  #       fall back to local SQLite when LiteBans runs on H2.
+  # LITEBANS / MYSQL / POSTGRESQL / SQLITE
+  mode: AUTO
+
+  # Table name is <table-prefix>offenses
+  table-prefix: 'gavel_'
+
+  # MYSQL and POSTGRESQL only.
+  host: 'localhost'
+  port: 3306
+  database: 'litebans'
+  username: 'root'
+  password: ''
+  ssl: false
+  properties: 'useUnicode=true&characterEncoding=utf8&autoReconnect=true'
+
+  # SQLITE only, relative to the plugin folder.
+  file: 'gavel.db'
+
+# Unknown sound names are ignored, empty values disable the sound.
+sounds:
+  open: 'UI_BUTTON_CLICK'
+  apply: 'ENTITY_EXPERIENCE_ORB_PICKUP'
+  deny: 'BLOCK_NOTE_BLOCK_BASS'
+
+# Log every dispatched command.
+debug: false

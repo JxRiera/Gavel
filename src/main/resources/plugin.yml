@@ -1,0 +1,33 @@
+name: Gavel
+version: '${version}'
+main: dev.jxriera.gavel.Gavel
+api-version: '1.16'
+authors: [jxriera]
+description: GUI punishment overlay with automatic escalation, built on top of LiteBans.
+depend: [LiteBans]
+
+commands:
+  gavel:
+    description: Open the punishment overlay and manage the plugin.
+    aliases: [gv]
+    usage: /gavel help
+
+permissions:
+  gavel.use:
+    description: Opens the overlay when a punishment command is used.
+    default: op
+  gavel.bypass:
+    description: Runs the raw LiteBans commands without the overlay.
+    default: false
+  gavel.category.*:
+    description: Access to every category.
+    default: op
+  gavel.history:
+    description: View a player's Gavel history.
+    default: op
+  gavel.silent:
+    description: Apply punishments silently.
+    default: op
+  gavel.admin:
+    description: Reload the configuration and clear histories.
+    default: op
