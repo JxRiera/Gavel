@@ -3,6 +3,7 @@ package dev.jxriera.gavel.punish;
 import dev.jxriera.gavel.Gavel;
 import dev.jxriera.gavel.config.ConfigManager;
 import dev.jxriera.gavel.config.Messages;
+import dev.jxriera.gavel.escalation.EscalationEngine;
 import dev.jxriera.gavel.model.Category;
 import dev.jxriera.gavel.model.OffenseRecord;
 import dev.jxriera.gavel.model.Tier;
@@ -14,31 +15,86 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 
 public final class PunishmentService {
+
     private final Gavel plugin;
+    private final DuplicateGuard duplicates = new DuplicateGuard();
 
     public PunishmentService(Gavel plugin) {
         this.plugin = plugin;
     }
 
-    public void apply(Player staff, UUID targetId, String targetName, Category category, Tier tier,
-                      int offenseNumber, boolean silent) {
+    public void apply(final Player staff, final UUID targetId, final String targetName,
+                      final Category category, final boolean silent) {
+        final ConfigManager config = plugin.config();
+        final Messages messages = config.messages();
+        final String key = Targets.storageKey(targetId, targetName);
+
+        if (!duplicates.tryBegin(key, config.getDuplicateWindowMillis())) {
+            messages.send(staff, "duplicate-punishment", Messages.map("target", targetName));
+            Sounds.play(staff, config.getSoundDeny());
+            return;
+        }
+
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
+            @Override
+            public void run() {
+                List<OffenseRecord> history;
+                try {
+                    history = plugin.database().find(key, true);
+                } catch (Exception ex) {
+                    plugin.getLogger().log(Level.SEVERE,
+                            "Could not read the history of " + targetName, ex);
+                    duplicates.finish(key, false);
+                    Bukkit.getScheduler().runTask(plugin, new Runnable() {
+                        @Override
+                        public void run() {
+                            messages.send(staff, "db-error");
+                            Sounds.play(staff, config.getSoundDeny());
+                        }
+                    });
+                    return;
+                }
+                final EscalationEngine.Result result =
+                        EscalationEngine.resolve(category, history, config.getOverflow());
+                Bukkit.getScheduler().runTask(plugin, new Runnable() {
+                    @Override
+                    public void run() {
+                        boolean applied = dispatchResolved(staff, targetId, targetName, category,
+                                result, silent);
+                        duplicates.finish(key, applied);
+                    }
+                });
+            }
+        });
+    }
+
+    private boolean dispatchResolved(Player staff, UUID targetId, String targetName,
+                                     Category category, EscalationEngine.Result result,
+                                     boolean silent) {
         ConfigManager config = plugin.config();
         Messages messages = config.messages();
+        Tier tier = result.getTier();
 
-        boolean permanent = tier.isPermanent();
-        String templateKey = tier.getType().templateKey(permanent);
+        if (!staff.isOnline()) {
+            plugin.getLogger().warning(staff.getName() + " went offline before the punishment for "
+                    + targetName + " could be applied, nothing was done.");
+            return false;
+        }
+
+        String templateKey = tier.getType().templateKey(tier.isPermanent());
         String template = config.getCommandTemplate(templateKey);
         if (template == null || template.trim().isEmpty()) {
             plugin.getLogger().severe("Missing template execution.commands." + templateKey
                     + " in config.yml, nothing was applied.");
             messages.send(staff, "template-missing", Messages.map("template", templateKey));
             Sounds.play(staff, config.getSoundDeny());
-            return;
+            return false;
         }
 
         if (config.getExecuteAs() == ConfigManager.ExecuteAs.PLAYER && config.isVerifyPermissions()) {
@@ -46,14 +102,15 @@ public final class PunishmentService {
             if (node != null && !staff.hasPermission(node)) {
                 messages.send(staff, "missing-litebans-permission", Messages.map("permission", node));
                 Sounds.play(staff, config.getSoundDeny());
-                return;
+                return false;
             }
         }
 
-        String flags = silent && staff.hasPermission("gavel.silent")
-                ? config.getSilentFlag().trim() + " "
-                : "";
-        boolean effectiveSilent = !flags.isEmpty();
+        boolean effectiveSilent = silent && staff.hasPermission("gavel.silent");
+        if (silent && !effectiveSilent) {
+            messages.send(staff, "silent-no-permission");
+        }
+        String flags = effectiveSilent ? config.getSilentFlag().trim() + " " : "";
 
         Map<String, String> placeholders = new HashMap<String, String>();
         placeholders.put("target", targetName);
@@ -69,10 +126,10 @@ public final class PunishmentService {
 
         if (!dispatch(staff, command)) {
             Sounds.play(staff, config.getSoundDeny());
-            return;
+            return false;
         }
 
-        runPostCommands(staff, targetName, category, tier, offenseNumber);
+        runPostCommands(staff, targetName, category, tier, result.getOffenseNumber());
         record(staff, targetId, targetName, category, tier, effectiveSilent);
 
         String durationText = tier.getType().supportsDuration()
@@ -84,8 +141,9 @@ public final class PunishmentService {
                 "duration", durationText,
                 "reason", tier.getReason(),
                 "category", category.getId(),
-                "offense", String.valueOf(offenseNumber)));
+                "offense", String.valueOf(result.getOffenseNumber())));
         Sounds.play(staff, config.getSoundApply());
+        return true;
     }
 
     private boolean dispatch(Player staff, String command) {

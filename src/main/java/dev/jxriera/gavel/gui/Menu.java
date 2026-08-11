@@ -2,6 +2,7 @@ package dev.jxriera.gavel.gui;
 
 import dev.jxriera.gavel.Gavel;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
@@ -39,8 +40,7 @@ public abstract class Menu implements InventoryHolder {
             try {
                 inventory = Bukkit.createInventory(this, size(), rendered);
             } catch (Throwable ex) {
-                inventory = Bukkit.createInventory(this, size(),
-                        rendered.length() > 32 ? rendered.substring(0, 32) : rendered);
+                inventory = Bukkit.createInventory(this, size(), truncate(rendered, 32));
             }
         }
         return inventory;
@@ -77,6 +77,17 @@ public abstract class Menu implements InventoryHolder {
         clear();
         build();
         viewer.updateInventory();
+    }
+
+    static String truncate(String input, int max) {
+        if (input == null || input.length() <= max) {
+            return input == null ? "" : input;
+        }
+        String cut = input.substring(0, max);
+        while (!cut.isEmpty() && cut.charAt(cut.length() - 1) == ChatColor.COLOR_CHAR) {
+            cut = cut.substring(0, cut.length() - 1);
+        }
+        return cut;
     }
 
     void handleClick(InventoryClickEvent event) {

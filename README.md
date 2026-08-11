@@ -112,6 +112,7 @@ The menu layout lives at the top of the same file:
 | `execution.silent-flag` | `-s` | Flag appended for silent punishments |
 | `execution.verify-permissions` | `true` | Checks the LiteBans permission before dispatching |
 | `execution.permissions.*` | `litebans.ban`, … | Node required per punishment type |
+| `execution.duplicate-window-seconds` | `5` | Seconds in which the same player cannot be punished twice. 0 disables it |
 | `execution.post-commands` | empty | Console commands run after a successful punishment |
 | `revert.*` | see below | Rolls the escalation counter back when a punishment is lifted |
 | `confirm.enabled` | `true` | Second screen before the punishment is applied |
@@ -169,7 +170,6 @@ revert:
     unban: [BAN]
     unbanip: [IPBAN]
     unmute: [MUTE]
-    unmuteip: [MUTE]
     unwarn: [WARN]
   permissions:
     unban: 'litebans.unban'
@@ -227,7 +227,7 @@ main thread.
 | `/gavel history <player>` | `gavel.history` |
 | `/gavel clear <player> [category]` | `gavel.admin` |
 | `/gavel reload` | `gavel.admin` |
-| `/gavel version` | |
+| `/gavel version` | `gavel.admin` |
 
 `clear` marks the offences inactive instead of deleting them, so the counter resets but the
 records stay.

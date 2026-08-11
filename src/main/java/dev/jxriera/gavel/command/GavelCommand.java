@@ -78,6 +78,10 @@ public final class GavelCommand implements CommandExecutor, TabCompleter {
         }
 
         if (sub.equals("version")) {
+            if (!sender.hasPermission("gavel.admin")) {
+                messages.send(sender, "no-permission");
+                return true;
+            }
             messages.send(sender, "version", Messages.map(
                     "version", plugin.getDescription().getVersion(),
                     "storage", plugin.database().describe()));
@@ -209,11 +213,11 @@ public final class GavelCommand implements CommandExecutor, TabCompleter {
             if (sender.hasPermission("gavel.admin")) {
                 options.add("reload");
                 options.add("clear");
+                options.add("version");
             }
             if (sender.hasPermission("gavel.history")) {
                 options.add("history");
             }
-            options.add("version");
             for (Player online : Bukkit.getOnlinePlayers()) {
                 options.add(online.getName());
             }

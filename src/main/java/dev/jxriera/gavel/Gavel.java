@@ -84,14 +84,8 @@ public final class Gavel extends JavaPlugin {
     }
 
     public void reconnectDatabase() throws SQLException {
-        Database previous = this.database;
-        Database replacement = new Database(config.getDatabaseSettings());
-        replacement.connect();
-        this.database = replacement;
-        if (previous != null) {
-            previous.close();
-        }
-        getLogger().info("Storage reconnected: " + replacement.describe());
+        database.reconfigure(config.getDatabaseSettings());
+        getLogger().info("Storage reconnected: " + database.describe());
     }
 
     public ConfigManager config() {

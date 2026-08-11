@@ -87,8 +87,7 @@ public final class ConfirmMenu extends Menu {
             @Override
             public void run(InventoryClickEvent event) {
                 viewer.closeInventory();
-                plugin.punishments().apply(viewer, targetId, targetName, category,
-                        result.getTier(), result.getOffenseNumber(), silent);
+                plugin.punishments().apply(viewer, targetId, targetName, category, silent);
             }
         });
 

@@ -16,6 +16,8 @@ cancelled: '%prefix%&7Punishment cancelled.'
 
 category-no-permission: '%prefix%&cYou do not have permission for category &f%category%&c.'
 missing-litebans-permission: '%prefix%&cYou are missing the LiteBans permission &f%permission%&c, nothing was applied.'
+silent-no-permission: '%prefix%&cYou cannot punish silently, applying it normally.'
+duplicate-punishment: '%prefix%&c%target% was just punished, wait a moment before trying again.'
 template-missing: '%prefix%&cMissing command template &f%template% &cin config.yml.'
 db-error: '%prefix%&cDatabase error, check the console.'
 

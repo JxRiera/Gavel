@@ -60,6 +60,10 @@ execution:
     WARN: 'litebans.warn'
     KICK: 'litebans.kick'
 
+  # Seconds during which the same player cannot be punished again, so two staff
+  # members acting at once cannot both apply the same tier. 0 disables it.
+  duplicate-window-seconds: 5
+
   # Console commands run after a successful punishment.
   # Placeholders: %target% %staff% %category% %type% %duration% %reason% %offense%
   post-commands: []
@@ -77,7 +81,6 @@ revert:
     unban: [BAN]
     unbanip: [IPBAN]
     unmute: [MUTE]
-    unmuteip: [MUTE]
     unwarn: [WARN]
 
   # Checked when execution.verify-permissions is on and a player runs the command.
@@ -85,7 +88,6 @@ revert:
     unban: 'litebans.unban'
     unbanip: 'litebans.unbanip'
     unmute: 'litebans.unmute'
-    unmuteip: 'litebans.unmuteip'
     unwarn: 'litebans.unwarn'
 
 confirm:

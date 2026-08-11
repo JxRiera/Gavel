@@ -28,8 +28,8 @@ public final class Database {
         public String source = "manual";
     }
 
-    private final Settings settings;
     private final Object lock = new Object();
+    private Settings settings;
     private Connection connection;
 
     public Database(Settings settings) {
@@ -51,6 +51,15 @@ public final class Database {
 
     public void connect() throws SQLException {
         synchronized (lock) {
+            connection = open();
+            createSchema(connection);
+        }
+    }
+
+    public void reconfigure(Settings updated) throws SQLException {
+        synchronized (lock) {
+            closeConnection();
+            this.settings = updated;
             connection = open();
             createSchema(connection);
         }
@@ -126,13 +135,17 @@ public final class Database {
 
     public void close() {
         synchronized (lock) {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException ignored) {
-                }
-                connection = null;
+            closeConnection();
+        }
+    }
+
+    private void closeConnection() {
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (SQLException ignored) {
             }
+            connection = null;
         }
     }
 

@@ -50,6 +50,7 @@ public final class ConfigManager {
     private Map<String, String> commandTemplates = new LinkedHashMap<String, String>();
     private String silentFlag = "-s";
     private List<String> postCommands = new ArrayList<String>();
+    private long duplicateWindowMillis = 5000L;
     private boolean verifyPermissions = true;
     private Map<String, String> liteBansPermissions = new LinkedHashMap<String, String>();
 
@@ -119,6 +120,7 @@ public final class ConfigManager {
         commandTemplates = readStringMap(config.getConfigurationSection("execution.commands"), false);
         silentFlag = config.getString("execution.silent-flag", "-s");
         postCommands = config.getStringList("execution.post-commands");
+        duplicateWindowMillis = Math.max(0, config.getInt("execution.duplicate-window-seconds", 5)) * 1000L;
         verifyPermissions = config.getBoolean("execution.verify-permissions", true);
         liteBansPermissions = readStringMap(config.getConfigurationSection("execution.permissions"), true);
 
@@ -396,6 +398,10 @@ public final class ConfigManager {
 
     public List<String> getPostCommands() {
         return postCommands;
+    }
+
+    public long getDuplicateWindowMillis() {
+        return duplicateWindowMillis;
     }
 
     public boolean isVerifyPermissions() {

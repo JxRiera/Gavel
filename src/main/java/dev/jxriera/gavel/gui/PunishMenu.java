@@ -145,8 +145,7 @@ public final class PunishMenu extends Menu {
             return;
         }
         viewer.closeInventory();
-        plugin.punishments().apply(viewer, targetId, targetName, category, tier,
-                result.getOffenseNumber(), silent);
+        plugin.punishments().apply(viewer, targetId, targetName, category, silent);
     }
 
     private ItemStack icon(Category category, EscalationEngine.Result result) {
