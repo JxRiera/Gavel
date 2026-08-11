@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "dev.jxriera"
-version = "1.0.0"
+version = "1.0.1"
 
 val javaRelease = 8
 
