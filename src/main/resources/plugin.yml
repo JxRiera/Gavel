@@ -11,6 +11,8 @@ commands:
     description: Open the punishment overlay and manage the plugin.
     aliases: [gv]
     usage: /gavel help
+    permission: gavel.use
+    permission-message: ''
 
 permissions:
   gavel.use:

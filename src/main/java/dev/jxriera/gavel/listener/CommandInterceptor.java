@@ -68,6 +68,11 @@ public final class CommandInterceptor implements Listener {
         }
 
         event.setCancelled(true);
+        if (!Targets.isValidName(targetName)) {
+            config.messages().send(staff, "unknown-player", Messages.map("target", targetName));
+            Sounds.play(staff, config.getSoundDeny());
+            return;
+        }
         openOverlay(staff, targetName);
     }
 
@@ -149,7 +154,7 @@ public final class CommandInterceptor implements Listener {
             }
         }
         final String targetName = firstNonFlag(parts);
-        if (targetName == null) {
+        if (!Targets.isValidName(targetName)) {
             return;
         }
 

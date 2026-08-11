@@ -76,7 +76,14 @@ public abstract class Menu implements InventoryHolder {
     public void refresh() {
         clear();
         build();
-        viewer.updateInventory();
+        Bukkit.getScheduler().runTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+                if (viewer.isOnline()) {
+                    viewer.updateInventory();
+                }
+            }
+        });
     }
 
     static String truncate(String input, int max) {

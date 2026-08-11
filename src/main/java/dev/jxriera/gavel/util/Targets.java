@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 public final class Targets {
     public static final class Resolved {
@@ -24,7 +25,13 @@ public final class Targets {
         void done(Resolved resolved);
     }
 
+    private static final Pattern VALID_NAME = Pattern.compile("[A-Za-z0-9_]{1,16}");
+
     private Targets() {
+    }
+
+    public static boolean isValidName(String input) {
+        return input != null && VALID_NAME.matcher(input).matches();
     }
 
     @SuppressWarnings("deprecation")

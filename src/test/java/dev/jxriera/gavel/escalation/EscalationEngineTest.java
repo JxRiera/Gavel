@@ -28,7 +28,7 @@ class EscalationEngineTest {
 
     private static OffenseRecord offense(String category, long created) {
         return new OffenseRecord(0L, "uuid", "Steve", category, 1, "BAN", "15d", "reason",
-                "staff-uuid", "Staff", "main", false, created);
+                "staff-uuid", "Staff", "main", false, true, created);
     }
 
     private static List<OffenseRecord> repeat(String category, int times, long created) {

@@ -231,8 +231,8 @@ public final class Database {
         synchronized (lock) {
             PreparedStatement statement = connection().prepareStatement(sql);
             try {
-                statement.setString(1, record.getUuid());
-                statement.setString(2, record.getName());
+                statement.setString(1, truncate(record.getUuid(), 36));
+                statement.setString(2, truncate(record.getName(), 32));
                 statement.setString(3, record.getCategory());
                 statement.setInt(4, record.getTier());
                 statement.setString(5, record.getType());
@@ -252,7 +252,7 @@ public final class Database {
 
     public List<OffenseRecord> find(String uuid, boolean onlyActive) throws SQLException {
         String sql = "SELECT id, uuid, name, category, tier, type, duration, reason, staff_uuid,"
-                + " staff_name, server, silent, created FROM " + table()
+                + " staff_name, server, silent, active, created FROM " + table()
                 + " WHERE uuid = ?" + (onlyActive ? " AND active = 1" : "")
                 + " ORDER BY created DESC";
         List<OffenseRecord> out = new ArrayList<OffenseRecord>();
@@ -276,6 +276,7 @@ public final class Database {
                             results.getString("staff_name"),
                             results.getString("server"),
                             results.getInt("silent") == 1,
+                            results.getInt("active") == 1,
                             results.getLong("created")));
                 }
             } finally {

@@ -164,7 +164,8 @@ public final class HistoryMenu extends Menu {
                 "staff", record.getStaffName() == null ? messages.word("unknown") : record.getStaffName(),
                 "date", date,
                 "server", record.getServer() == null ? messages.word("none") : record.getServer(),
-                "silent", messages.bool(record.isSilent()));
+                "silent", messages.bool(record.isSilent()),
+                "active", messages.bool(record.isActive()));
 
         IconSpec spec = IconSpec.from(messages.section("history.entry"), Material.PAPER);
         List<String> lore = new ArrayList<String>();

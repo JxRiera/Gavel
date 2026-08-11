@@ -30,6 +30,7 @@ public final class PunishMenu extends Menu {
     private final UUID targetId;
     private final String targetName;
     private final List<OffenseRecord> history;
+    private final int size;
 
     public PunishMenu(Gavel plugin, Player viewer, UUID targetId, String targetName,
                       List<OffenseRecord> history) {
@@ -37,6 +38,7 @@ public final class PunishMenu extends Menu {
         this.targetId = targetId;
         this.targetName = targetName;
         this.history = history == null ? Collections.<OffenseRecord>emptyList() : history;
+        this.size = plugin.config().getMenuRows() * 9;
     }
 
     public static void open(final Gavel plugin, final Player staff, final UUID targetId,
@@ -81,7 +83,7 @@ public final class PunishMenu extends Menu {
 
     @Override
     protected int size() {
-        return plugin.config().getMenuRows() * 9;
+        return size;
     }
 
     @Override

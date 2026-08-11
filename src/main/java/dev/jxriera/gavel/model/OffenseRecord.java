@@ -13,11 +13,12 @@ public final class OffenseRecord {
     private final String staffName;
     private final String server;
     private final boolean silent;
+    private final boolean active;
     private final long created;
 
     public OffenseRecord(long id, String uuid, String name, String category, int tier, String type,
                          String duration, String reason, String staffUuid, String staffName,
-                         String server, boolean silent, long created) {
+                         String server, boolean silent, boolean active, long created) {
         this.id = id;
         this.uuid = uuid;
         this.name = name;
@@ -30,6 +31,7 @@ public final class OffenseRecord {
         this.staffName = staffName;
         this.server = server;
         this.silent = silent;
+        this.active = active;
         this.created = created;
     }
 
@@ -79,6 +81,10 @@ public final class OffenseRecord {
 
     public boolean isSilent() {
         return silent;
+    }
+
+    public boolean isActive() {
+        return active;
     }
 
     public long getCreated() {

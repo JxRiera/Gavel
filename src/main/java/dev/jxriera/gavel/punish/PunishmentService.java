@@ -41,37 +41,60 @@ public final class PunishmentService {
             return;
         }
 
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
-            @Override
-            public void run() {
-                List<OffenseRecord> history;
-                try {
-                    history = plugin.database().find(key, true);
-                } catch (Exception ex) {
-                    plugin.getLogger().log(Level.SEVERE,
-                            "Could not read the history of " + targetName, ex);
-                    duplicates.finish(key, false);
-                    Bukkit.getScheduler().runTask(plugin, new Runnable() {
-                        @Override
-                        public void run() {
-                            messages.send(staff, "db-error");
-                            Sounds.play(staff, config.getSoundDeny());
-                        }
-                    });
-                    return;
+        try {
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    resolveAndDispatch(staff, targetId, targetName, category, silent, key);
                 }
-                final EscalationEngine.Result result =
-                        EscalationEngine.resolve(category, history, config.getOverflow());
-                Bukkit.getScheduler().runTask(plugin, new Runnable() {
-                    @Override
-                    public void run() {
-                        boolean applied = dispatchResolved(staff, targetId, targetName, category,
-                                result, silent);
-                        duplicates.finish(key, applied);
-                    }
-                });
-            }
-        });
+            });
+        } catch (Throwable ex) {
+            duplicates.finish(key, false);
+            plugin.getLogger().log(Level.SEVERE, "Could not schedule the punishment lookup", ex);
+        }
+    }
+
+    private void resolveAndDispatch(final Player staff, final UUID targetId, final String targetName,
+                                    final Category category, final boolean silent, final String key) {
+        final ConfigManager config = plugin.config();
+        List<OffenseRecord> history;
+        try {
+            history = plugin.database().find(key, true);
+        } catch (Exception ex) {
+            plugin.getLogger().log(Level.SEVERE, "Could not read the history of " + targetName, ex);
+            duplicates.finish(key, false);
+            notifyDatabaseError(staff);
+            return;
+        }
+        final EscalationEngine.Result result =
+                EscalationEngine.resolve(category, history, config.getOverflow());
+        try {
+            Bukkit.getScheduler().runTask(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    boolean applied = dispatchResolved(staff, targetId, targetName, category,
+                            result, silent);
+                    duplicates.finish(key, applied);
+                }
+            });
+        } catch (Throwable ex) {
+            duplicates.finish(key, false);
+            plugin.getLogger().log(Level.SEVERE, "Could not schedule the punishment dispatch", ex);
+        }
+    }
+
+    private void notifyDatabaseError(final Player staff) {
+        try {
+            Bukkit.getScheduler().runTask(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    plugin.config().messages().send(staff, "db-error");
+                    Sounds.play(staff, plugin.config().getSoundDeny());
+                }
+            });
+        } catch (Throwable ignored) {
+            plugin.getLogger().warning("Could not notify " + staff.getName() + " of the database error.");
+        }
     }
 
     private boolean dispatchResolved(Player staff, UUID targetId, String targetName,
@@ -209,6 +232,7 @@ public final class PunishmentService {
                 staff.getName(),
                 plugin.config().getServerName(),
                 silent,
+                true,
                 System.currentTimeMillis());
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {

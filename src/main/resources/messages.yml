@@ -78,6 +78,7 @@ history:
       - '&7Date: &f%date%'
       - '&7Server: &f%server%'
       - '&7Silent: &f%silent%'
+      - '&7Still counts: &f%active%'
   previous:
     material: ARROW
     name: '&e« Previous'

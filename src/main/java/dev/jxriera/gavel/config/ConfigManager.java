@@ -115,8 +115,8 @@ public final class ConfigManager {
         passthroughWithoutTarget = config.getBoolean("intercept.passthrough-without-target", true);
         requireKnownPlayer = config.getBoolean("intercept.require-known-player", true);
 
-        executeAs = "CONSOLE".equalsIgnoreCase(config.getString("execution.execute-as", "PLAYER"))
-                ? ExecuteAs.CONSOLE : ExecuteAs.PLAYER;
+        executeAs = ExecuteAs.valueOf(readChoice("execution.execute-as",
+                config.getString("execution.execute-as", "PLAYER"), "PLAYER", "PLAYER", "CONSOLE"));
         commandTemplates = readStringMap(config.getConfigurationSection("execution.commands"), false);
         silentFlag = config.getString("execution.silent-flag", "-s");
         postCommands = config.getStringList("execution.post-commands");
@@ -125,7 +125,8 @@ public final class ConfigManager {
         liteBansPermissions = readStringMap(config.getConfigurationSection("execution.permissions"), true);
 
         revertEnabled = config.getBoolean("revert.enabled", true);
-        revertAll = "ALL".equalsIgnoreCase(config.getString("revert.scope", "LATEST"));
+        revertAll = "ALL".equals(readChoice("revert.scope",
+                config.getString("revert.scope", "LATEST"), "LATEST", "LATEST", "ALL"));
         revertCommands = new LinkedHashMap<String, Set<String>>();
         ConfigurationSection revertSection = config.getConfigurationSection("revert.commands");
         if (revertSection != null) {
@@ -150,7 +151,8 @@ public final class ConfigManager {
         confirmOnlyPermanent = config.getBoolean("confirm.only-permanent", false);
 
         globalExpireMillis = readExpire(config.getString("escalation.expire-after", "perm"));
-        overflow = Overflow.parse(config.getString("escalation.on-overflow", "LAST"), Overflow.LAST);
+        overflow = Overflow.parse(readChoice("escalation.on-overflow",
+                config.getString("escalation.on-overflow", "LAST"), "LAST", "LAST", "CYCLE"), Overflow.LAST);
 
         soundOpen = config.getString("sounds.open", "");
         soundApply = config.getString("sounds.apply", "");
@@ -159,6 +161,7 @@ public final class ConfigManager {
         loadMenu(categoriesFile);
         loadCategories(categoriesFile);
         databaseSettings = resolveDatabase(config);
+        warnOnRevertOverlap();
     }
 
     private FileConfiguration loadYaml(String name) {
@@ -181,6 +184,30 @@ public final class ConfigManager {
             out.put(normalized, section.getString(key, ""));
         }
         return out;
+    }
+
+    private void warnOnRevertOverlap() {
+        for (String label : revertCommands.keySet()) {
+            if (interceptCommands.contains(label)) {
+                plugin.getLogger().warning("'" + label + "' is listed in both intercept.commands and"
+                        + " revert.commands. The overlay wins and the rollback never runs; remove it"
+                        + " from one of the two lists.");
+            }
+        }
+    }
+
+    private String readChoice(String path, String raw, String fallback, String... allowed) {
+        String value = raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT);
+        for (String candidate : allowed) {
+            if (candidate.equals(value)) {
+                return candidate;
+            }
+        }
+        if (!value.isEmpty()) {
+            plugin.getLogger().warning(path + ": '" + raw + "' is not a valid value ("
+                    + String.join(", ", allowed) + "), using " + fallback + ".");
+        }
+        return fallback;
     }
 
     private long readExpire(String raw) {
@@ -317,8 +344,8 @@ public final class ConfigManager {
         settings.tablePrefix = config.getString("database.table-prefix", "gavel_");
         settings.sqliteFile = new File(plugin.getDataFolder(), config.getString("database.file", "gavel.db"));
 
-        String mode = config.getString("database.mode", "AUTO");
-        mode = mode == null ? "AUTO" : mode.trim().toUpperCase(Locale.ROOT);
+        String mode = readChoice("database.mode", config.getString("database.mode", "AUTO"),
+                "AUTO", "AUTO", "LITEBANS", "MYSQL", "POSTGRESQL", "SQLITE");
 
         if (mode.equals("SQLITE")) {
             settings.dialect = SqlDialect.SQLITE;

@@ -22,7 +22,7 @@ menu:
     material: BOOK
     name: '&bHistory of &f%target%'
     lore:
-      - '&7Records: &f%total%'
+      - '&7Offences that still count: &f%total%'
       - ''
       - '&aClick &7» view details'
 

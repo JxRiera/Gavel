@@ -129,6 +129,11 @@ public final class GavelCommand implements CommandExecutor, TabCompleter {
             config.messages().send(staff, "cannot-punish-self");
             return;
         }
+        if (!Targets.isValidName(targetName)) {
+            config.messages().send(staff, "unknown-player", Messages.map("target", targetName));
+            Sounds.play(staff, config.getSoundDeny());
+            return;
+        }
         Targets.resolve(plugin, targetName, new Targets.Callback() {
             @Override
             public void done(Targets.Resolved resolved) {
@@ -146,6 +151,11 @@ public final class GavelCommand implements CommandExecutor, TabCompleter {
     }
 
     private void openHistory(final Player staff, final String targetName) {
+        if (!Targets.isValidName(targetName)) {
+            plugin.config().messages().send(staff, "unknown-player",
+                    Messages.map("target", targetName));
+            return;
+        }
         Targets.resolve(plugin, targetName, new Targets.Callback() {
             @Override
             public void done(Targets.Resolved resolved) {
@@ -170,6 +180,10 @@ public final class GavelCommand implements CommandExecutor, TabCompleter {
             category = found.getId();
         }
 
+        if (!Targets.isValidName(targetName)) {
+            messages.send(sender, "unknown-player", Messages.map("target", targetName));
+            return;
+        }
         Targets.resolve(plugin, targetName, new Targets.Callback() {
             @Override
             public void done(final Targets.Resolved resolved) {
@@ -229,7 +243,7 @@ public final class GavelCommand implements CommandExecutor, TabCompleter {
             }
             return out;
         }
-        if (args.length == 2) {
+        if (args.length == 2 && (args[0].equalsIgnoreCase("history") || args[0].equalsIgnoreCase("clear"))) {
             String prefix = args[1].toLowerCase();
             for (Player online : Bukkit.getOnlinePlayers()) {
                 if (online.getName().toLowerCase().startsWith(prefix)) {
