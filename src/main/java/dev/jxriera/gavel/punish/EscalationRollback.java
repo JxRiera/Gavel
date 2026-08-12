@@ -60,6 +60,10 @@ public final class EscalationRollback {
                     return;
                 }
                 if (affected == 0) {
+                    if (plugin.config().isDebug()) {
+                        plugin.getLogger().info("Nothing to roll back for " + fallbackName
+                                + ": no active, unexpired offence of type " + types + ".");
+                    }
                     return;
                 }
                 announce(displayName, affected, notifyPlayerId, notifyConsole);

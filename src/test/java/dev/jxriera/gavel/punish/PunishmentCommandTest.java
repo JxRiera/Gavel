@@ -1,11 +1,14 @@
 package dev.jxriera.gavel.punish;
 
+import dev.jxriera.gavel.model.PunishmentType;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PunishmentCommandTest {
 
@@ -62,5 +65,55 @@ class PunishmentCommandTest {
     @Test
     void nullTemplateBecomesEmpty() {
         assertEquals("", PunishmentService.buildCommand(null, placeholders("", "15d", "reason")));
+    }
+
+    @Test
+    void theSilentFlagIsAddedOnlyWhenLiteBansIsNotAlreadySilent() {
+        assertEquals("-s ", PunishmentService.flagsFor(true, false, "-s", ""));
+        assertEquals("", PunishmentService.flagsFor(true, true, "-s", ""));
+        assertEquals("", PunishmentService.flagsFor(false, false, "-s", ""));
+    }
+
+    @Test
+    void theBroadcastFlagForcesAnAnnouncementOnASilentByDefaultServer() {
+        assertEquals("-b ", PunishmentService.flagsFor(false, true, "-s", "-b"));
+        assertEquals("", PunishmentService.flagsFor(false, false, "-s", "-b"));
+        assertEquals("", PunishmentService.flagsFor(true, true, "-s", "-b"));
+    }
+
+    @Test
+    void aSilentByDefaultServerStaysSilentWithoutABroadcastFlag() {
+        assertTrue(PunishmentService.effectiveSilent(false, true, ""));
+        assertFalse(PunishmentService.effectiveSilent(false, true, "-b"));
+        assertFalse(PunishmentService.effectiveSilent(false, false, ""));
+        assertTrue(PunishmentService.effectiveSilent(true, false, ""));
+    }
+
+    @Test
+    void whatLiteBansReportsWinsOverTheConfiguredDefault() {
+        assertEquals(PunishmentType.IPBAN,
+                PunishmentService.recordedType(PunishmentType.BAN, Boolean.TRUE, false));
+        assertEquals(PunishmentType.BAN,
+                PunishmentService.recordedType(PunishmentType.IPBAN, Boolean.FALSE, true));
+    }
+
+    @Test
+    void withoutAReportTheConfiguredDefaultDecides() {
+        assertEquals(PunishmentType.IPBAN,
+                PunishmentService.recordedType(PunishmentType.BAN, null, true));
+        assertEquals(PunishmentType.BAN,
+                PunishmentService.recordedType(PunishmentType.BAN, null, false));
+        assertEquals(PunishmentType.IPBAN,
+                PunishmentService.recordedType(PunishmentType.IPBAN, null, false));
+    }
+
+    @Test
+    void onlyBansCanTurnIntoIpBans() {
+        assertEquals(PunishmentType.MUTE,
+                PunishmentService.recordedType(PunishmentType.MUTE, Boolean.TRUE, true));
+        assertEquals(PunishmentType.WARN,
+                PunishmentService.recordedType(PunishmentType.WARN, Boolean.TRUE, true));
+        assertEquals(PunishmentType.KICK,
+                PunishmentService.recordedType(PunishmentType.KICK, Boolean.TRUE, true));
     }
 }

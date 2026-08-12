@@ -21,7 +21,7 @@ class ConfirmationsTest {
     private static Confirmations.Callback noop() {
         return new Confirmations.Callback() {
             @Override
-            public void done(boolean confirmed) {
+            public void done(boolean confirmed, Boolean ipBan, Boolean silent) {
             }
         };
     }
@@ -64,6 +64,23 @@ class ConfirmationsTest {
         assertEquals("mute", Confirmations.family(PunishmentType.MUTE));
         assertEquals("warn", Confirmations.family(PunishmentType.WARN));
         assertEquals("kick", Confirmations.family(PunishmentType.KICK));
+    }
+
+    @Test
+    void aBanFamilyRemovalRollsBackBothBanAndIpBanRecords() {
+        assertTrue(Confirmations.typesOf("ban").contains("BAN"));
+        assertTrue(Confirmations.typesOf("ban").contains("IPBAN"));
+        assertEquals(2, Confirmations.typesOf("ban").size());
+    }
+
+    @Test
+    void theOtherFamiliesHoldASingleType() {
+        assertEquals(1, Confirmations.typesOf("mute").size());
+        assertTrue(Confirmations.typesOf("mute").contains("MUTE"));
+        assertEquals(1, Confirmations.typesOf("warn").size());
+        assertEquals(1, Confirmations.typesOf("kick").size());
+        assertTrue(Confirmations.typesOf(null).isEmpty());
+        assertTrue(Confirmations.typesOf("nonsense").isEmpty());
     }
 
     @Test
@@ -123,7 +140,7 @@ class ConfirmationsTest {
         final AtomicInteger failures = new AtomicInteger();
         confirmations.await(TARGET, PunishmentType.BAN, NOW, NOW, new Confirmations.Callback() {
             @Override
-            public void done(boolean confirmed) {
+            public void done(boolean confirmed, Boolean ipBan, Boolean silent) {
                 if (!confirmed) {
                     failures.incrementAndGet();
                 }
@@ -131,7 +148,7 @@ class ConfirmationsTest {
         });
 
         for (Confirmations.Pending expired : confirmations.expire(NOW)) {
-            expired.getCallback().done(false);
+            expired.getCallback().done(false, null, null);
         }
 
         assertEquals(1, failures.get());

@@ -4,13 +4,15 @@ import dev.jxriera.gavel.model.PunishmentType;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public final class Confirmations {
 
     public interface Callback {
-        void done(boolean confirmed);
+        void done(boolean confirmed, Boolean ipBan, Boolean silent);
     }
 
     public static final class Pending {
@@ -70,6 +72,19 @@ public final class Confirmations {
             default:
                 return null;
         }
+    }
+
+    public static Set<String> typesOf(String family) {
+        Set<String> types = new LinkedHashSet<String>();
+        if (family == null) {
+            return types;
+        }
+        for (PunishmentType type : PunishmentType.values()) {
+            if (family.equals(family(type))) {
+                types.add(type.name());
+            }
+        }
+        return types;
     }
 
     public static String familyOf(String liteBansType) {

@@ -9,7 +9,7 @@ import litebans.api.Events;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -107,7 +107,7 @@ public final class LiteBansBridge {
             if (matched == null) {
                 return;
             }
-            complete(matched, true);
+            complete(matched, true, flag(entry, true), flag(entry, false));
         } catch (Throwable ex) {
             plugin.getLogger().log(Level.WARNING, "Failed to handle a LiteBans entryAdded event", ex);
         }
@@ -119,14 +119,13 @@ public final class LiteBansBridge {
             if (!plugin.config().isRevertEnabled()) {
                 return;
             }
-            PunishmentType type = mapType(entry);
+            Set<String> types = Confirmations.typesOf(Confirmations.familyOf(entry.getType()));
             UUID targetId = parseUuid(entry.getUuid());
-            if (type == null || targetId == null) {
+            if (types.isEmpty() || targetId == null) {
                 return;
             }
             plugin.rollback().rollback(Targets.storageKey(targetId, targetId.toString()),
-                    targetId.toString(), Collections.singleton(type.name()),
-                    parseUuid(entry.getRemovedByUUID()), false);
+                    targetId.toString(), types, parseUuid(entry.getRemovedByUUID()), false);
         } catch (Throwable ex) {
             plugin.getLogger().log(Level.WARNING, "Failed to handle a LiteBans entryRemoved event", ex);
         }
@@ -136,26 +135,26 @@ public final class LiteBansBridge {
         Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
             @Override
             public void run() {
-                boolean applied = false;
+                Entry found = null;
                 try {
-                    applied = lookup(pending);
+                    found = lookup(pending);
                 } catch (Throwable ex) {
                     plugin.getLogger().log(Level.WARNING, "Could not ask LiteBans whether the "
                             + pending.getType() + " for " + pending.getTarget() + " exists", ex);
                 }
-                if (applied && plugin.config().isDebug()) {
+                if (found != null && plugin.config().isDebug()) {
                     plugin.getLogger().info("No entryAdded event arrived for the " + pending.getType()
                             + " on " + pending.getTarget() + ", but LiteBans has the record.");
                 }
-                complete(pending, applied);
+                complete(pending, found != null, flag(found, true), flag(found, false));
             }
         });
     }
 
-    private boolean lookup(Confirmations.Pending pending) {
+    private Entry lookup(Confirmations.Pending pending) {
         Database database = Database.get();
         if (database == null) {
-            return false;
+            return null;
         }
         UUID target = pending.getTarget();
         String scope = Database.ANY_SERVER_SCOPE;
@@ -175,17 +174,32 @@ public final class LiteBansBridge {
                 entry = database.getKick(target, null, scope);
                 break;
             default:
-                return false;
+                return null;
         }
-        return entry != null && entry.getDateStart() >= pending.getSince() - LOOKUP_SLACK_MILLIS;
+        if (entry == null || entry.getDateStart() < pending.getSince() - LOOKUP_SLACK_MILLIS) {
+            return null;
+        }
+        return entry;
     }
 
-    private void complete(final Confirmations.Pending pending, final boolean confirmed) {
+    private static Boolean flag(Entry entry, boolean ipBan) {
+        if (entry == null) {
+            return null;
+        }
+        try {
+            return ipBan ? entry.isIpban() : entry.isSilent();
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private void complete(final Confirmations.Pending pending, final boolean confirmed,
+                          final Boolean ipBan, final Boolean silent) {
         try {
             Bukkit.getScheduler().runTask(plugin, new Runnable() {
                 @Override
                 public void run() {
-                    pending.getCallback().done(confirmed);
+                    pending.getCallback().done(confirmed, ipBan, silent);
                 }
             });
         } catch (Throwable ex) {
@@ -224,26 +238,4 @@ public final class LiteBansBridge {
         }
     }
 
-    private static PunishmentType mapType(Entry entry) {
-        String family = Confirmations.familyOf(entry.getType());
-        if (family == null) {
-            return null;
-        }
-        if (family.equals("ban")) {
-            boolean ip;
-            try {
-                ip = entry.isIpban();
-            } catch (Throwable ignored) {
-                ip = false;
-            }
-            return ip ? PunishmentType.IPBAN : PunishmentType.BAN;
-        }
-        if (family.equals("mute")) {
-            return PunishmentType.MUTE;
-        }
-        if (family.equals("warn")) {
-            return PunishmentType.WARN;
-        }
-        return PunishmentType.KICK;
-    }
 }

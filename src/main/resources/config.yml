@@ -48,7 +48,22 @@ execution:
     warn-perm: 'warn %flags%%target% %reason%'
     kick: 'kick %flags%%target% %reason%'
 
+  # Flag appended when the punishment must be silent.
   silent-flag: '-s'
+
+  # Appended when the punishment must NOT be silent. Only useful when LiteBans is
+  # set to broadcast silently by default and offers a flag to force the broadcast.
+  broadcast-flag: ''
+
+  # What LiteBans does on its own, regardless of the flags Gavel passes.
+  # Set these to match your LiteBans configuration so the history and the messages
+  # describe what really happened. When the LiteBans API confirms a punishment its
+  # own record wins over these values.
+  litebans-defaults:
+    # Every ban is applied as an IP ban (LiteBans 'default_ban_ip').
+    ip-bans: false
+    # Every punishment is broadcast silently.
+    silent: false
 
   # Check the LiteBans permission before dispatching. dispatchCommand cannot
   # report a denial, so without this a refused command still counts as applied.
