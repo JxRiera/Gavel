@@ -5,6 +5,8 @@ import dev.jxriera.gavel.config.ConfigManager;
 import dev.jxriera.gavel.gui.Menu;
 import dev.jxriera.gavel.gui.MenuListener;
 import dev.jxriera.gavel.listener.CommandInterceptor;
+import dev.jxriera.gavel.litebans.LiteBansBridge;
+import dev.jxriera.gavel.punish.EscalationRollback;
 import dev.jxriera.gavel.punish.DispatchGuard;
 import dev.jxriera.gavel.punish.PunishmentService;
 import dev.jxriera.gavel.storage.Database;
@@ -21,6 +23,8 @@ public final class Gavel extends JavaPlugin {
     private Database database;
     private PunishmentService punishments;
     private DispatchGuard guard;
+    private LiteBansBridge liteBans;
+    private EscalationRollback rollback;
 
     @Override
     public void onEnable() {
@@ -51,6 +55,9 @@ public final class Gavel extends JavaPlugin {
         }
 
         this.punishments = new PunishmentService(this);
+        this.rollback = new EscalationRollback(this);
+        this.liteBans = new LiteBansBridge(this);
+        liteBans.enable();
 
         Bukkit.getPluginManager().registerEvents(new MenuListener(), this);
         Bukkit.getPluginManager().registerEvents(new CommandInterceptor(this), this);
@@ -68,6 +75,9 @@ public final class Gavel extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (liteBans != null) {
+            liteBans.disable();
+        }
         closeOpenMenus();
         if (database != null) {
             database.close();
@@ -102,5 +112,13 @@ public final class Gavel extends JavaPlugin {
 
     public DispatchGuard guard() {
         return guard;
+    }
+
+    public LiteBansBridge liteBans() {
+        return liteBans;
+    }
+
+    public EscalationRollback rollback() {
+        return rollback;
     }
 }

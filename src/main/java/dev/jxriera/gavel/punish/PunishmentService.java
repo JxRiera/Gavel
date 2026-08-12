@@ -4,8 +4,10 @@ import dev.jxriera.gavel.Gavel;
 import dev.jxriera.gavel.config.ConfigManager;
 import dev.jxriera.gavel.config.Messages;
 import dev.jxriera.gavel.escalation.EscalationEngine;
+import dev.jxriera.gavel.litebans.Confirmations;
 import dev.jxriera.gavel.model.Category;
 import dev.jxriera.gavel.model.OffenseRecord;
+import dev.jxriera.gavel.model.PunishmentType;
 import dev.jxriera.gavel.model.Tier;
 import dev.jxriera.gavel.util.Durations;
 import dev.jxriera.gavel.util.Sounds;
@@ -129,11 +131,14 @@ public final class PunishmentService {
             }
         }
 
-        boolean effectiveSilent = silent && staff.hasPermission("gavel.silent");
-        if (silent && !effectiveSilent) {
+        boolean wantSilent = silent && staff.hasPermission("gavel.silent");
+        if (silent && !wantSilent) {
             messages.send(staff, "silent-no-permission");
         }
-        String flags = effectiveSilent ? config.getSilentFlag().trim() + " " : "";
+        boolean silentByDefault = config.isLiteBansSilentByDefault();
+        boolean effectiveSilent = effectiveSilent(wantSilent, silentByDefault, config.getBroadcastFlag());
+        String flags = flagsFor(wantSilent, silentByDefault, config.getSilentFlag(),
+                config.getBroadcastFlag());
 
         Map<String, String> placeholders = new HashMap<String, String>();
         placeholders.put("target", targetName);
@@ -147,26 +152,72 @@ public final class PunishmentService {
             plugin.getLogger().info(staff.getName() + " -> /" + command);
         }
 
+        final boolean confirm = config.isConfirmWithApi()
+                && targetId != null
+                && plugin.liteBans().isAvailable();
+        if (confirm) {
+            plugin.liteBans().awaitConfirmation(targetId, tier.getType(),
+                    confirmation(staff, targetId, targetName, category, tier, result, effectiveSilent));
+        }
+
         if (!dispatch(staff, command)) {
+            if (confirm) {
+                plugin.liteBans().cancelConfirmation(targetId, tier.getType());
+            }
             Sounds.play(staff, config.getSoundDeny());
             return false;
         }
 
+        if (!confirm) {
+            onConfirmed(staff, targetId, targetName, category, tier, result, effectiveSilent, null, null);
+        }
+        return true;
+    }
+
+    private Confirmations.Callback confirmation(final Player staff, final UUID targetId,
+                                                final String targetName, final Category category,
+                                                final Tier tier, final EscalationEngine.Result result,
+                                                final boolean effectiveSilent) {
+        return new Confirmations.Callback() {
+            @Override
+            public void done(boolean confirmed, Boolean ipBan, Boolean silent) {
+                if (confirmed) {
+                    onConfirmed(staff, targetId, targetName, category, tier, result, effectiveSilent,
+                            ipBan, silent);
+                    return;
+                }
+                plugin.getLogger().warning("LiteBans never registered the " + tier.getType()
+                        + " for " + targetName + " requested by " + staff.getName()
+                        + "; the offence was not recorded.");
+                plugin.config().messages().send(staff, "not-applied",
+                        Messages.map("target", targetName));
+                Sounds.play(staff, plugin.config().getSoundDeny());
+            }
+        };
+    }
+
+    private void onConfirmed(Player staff, UUID targetId, String targetName, Category category,
+                             Tier tier, EscalationEngine.Result result, boolean effectiveSilent,
+                             Boolean entryIsIpBan, Boolean entryIsSilent) {
+        Messages messages = plugin.config().messages();
+        PunishmentType storedType = recordedType(tier.getType(), entryIsIpBan,
+                plugin.config().isLiteBansIpBansByDefault());
+        boolean storedSilent = entryIsSilent != null ? entryIsSilent : effectiveSilent;
+
         runPostCommands(staff, targetName, category, tier, result.getOffenseNumber());
-        record(staff, targetId, targetName, category, tier, effectiveSilent);
+        record(staff, targetId, targetName, category, tier, storedType, storedSilent);
 
         String durationText = tier.getType().supportsDuration()
                 ? Durations.display(tier.getDuration(), messages.word("permanent"))
                 : "";
-        messages.send(staff, effectiveSilent ? "applied-silent" : "applied", Messages.map(
+        messages.send(staff, storedSilent ? "applied-silent" : "applied", Messages.map(
                 "target", targetName,
-                "type", messages.word(tier.getType().wordKey()),
+                "type", messages.word(storedType.wordKey()),
                 "duration", durationText,
                 "reason", tier.getReason(),
                 "category", category.getId(),
                 "offense", String.valueOf(result.getOffenseNumber())));
-        Sounds.play(staff, config.getSoundApply());
-        return true;
+        Sounds.play(staff, plugin.config().getSoundApply());
     }
 
     private boolean dispatch(Player staff, String command) {
@@ -218,14 +269,14 @@ public final class PunishmentService {
     }
 
     private void record(Player staff, UUID targetId, String targetName, Category category, Tier tier,
-                        boolean silent) {
+                        PunishmentType storedType, boolean silent) {
         final OffenseRecord record = new OffenseRecord(
                 0L,
                 Targets.storageKey(targetId, targetName),
                 targetName,
                 category.getId(),
                 tier.getNumber(),
-                tier.getType().name(),
+                storedType.name(),
                 tier.getDuration(),
                 tier.getReason(),
                 staff.getUniqueId().toString(),
@@ -245,6 +296,36 @@ public final class PunishmentService {
                 }
             }
         });
+    }
+
+    static boolean effectiveSilent(boolean wantSilent, boolean silentByDefault, String broadcastFlag) {
+        return wantSilent || (silentByDefault && isBlank(broadcastFlag));
+    }
+
+    static String flagsFor(boolean wantSilent, boolean silentByDefault, String silentFlag,
+                           String broadcastFlag) {
+        if (wantSilent) {
+            return silentByDefault || isBlank(silentFlag) ? "" : silentFlag.trim() + " ";
+        }
+        if (silentByDefault && !isBlank(broadcastFlag)) {
+            return broadcastFlag.trim() + " ";
+        }
+        return "";
+    }
+
+    static PunishmentType recordedType(PunishmentType tierType, Boolean entryIsIpBan,
+                                       boolean ipBansByDefault) {
+        if (!"ban".equals(Confirmations.family(tierType))) {
+            return tierType;
+        }
+        boolean ip = entryIsIpBan != null
+                ? entryIsIpBan
+                : ipBansByDefault || tierType == PunishmentType.IPBAN;
+        return ip ? PunishmentType.IPBAN : PunishmentType.BAN;
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
     static String buildCommand(String template, Map<String, String> placeholders) {

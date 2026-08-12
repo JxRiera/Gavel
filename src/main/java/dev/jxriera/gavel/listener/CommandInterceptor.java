@@ -4,8 +4,6 @@ import dev.jxriera.gavel.Gavel;
 import dev.jxriera.gavel.config.ConfigManager;
 import dev.jxriera.gavel.config.Messages;
 import dev.jxriera.gavel.gui.PunishMenu;
-import dev.jxriera.gavel.model.OffenseRecord;
-import dev.jxriera.gavel.util.Durations;
 import dev.jxriera.gavel.util.Sounds;
 import dev.jxriera.gavel.util.Targets;
 import org.bukkit.Bukkit;
@@ -18,11 +16,8 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.RemoteServerCommandEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.Level;
 
 public final class CommandInterceptor implements Listener {
     private final Gavel plugin;
@@ -136,6 +131,9 @@ public final class CommandInterceptor implements Listener {
         if (!config.isRevertEnabled() || rawCommand == null) {
             return;
         }
+        if (plugin.liteBans().isAvailable()) {
+            return;
+        }
         if (plugin.guard().isDispatching(guardKey)) {
             return;
         }
@@ -164,56 +162,13 @@ public final class CommandInterceptor implements Listener {
                 Targets.resolve(plugin, targetName, new Targets.Callback() {
                     @Override
                     public void done(Targets.Resolved resolved) {
-                        revert(sender, resolved, types);
+                        UUID notify = sender instanceof Player ? ((Player) sender).getUniqueId() : null;
+                        plugin.rollback().rollback(Targets.storageKey(resolved.uuid, resolved.name),
+                                resolved.name, types, notify, notify == null);
                     }
                 });
             }
         }, 1L);
-    }
-
-    private void revert(final CommandSender sender, final Targets.Resolved resolved,
-                        final Set<String> types) {
-        final String key = Targets.storageKey(resolved.uuid, resolved.name);
-        final boolean all = plugin.config().isRevertAll();
-
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
-            @Override
-            public void run() {
-                final int affected;
-                try {
-                    long now = System.currentTimeMillis();
-                    List<Long> ids = new ArrayList<Long>();
-                    for (OffenseRecord record : plugin.database().find(key, true)) {
-                        if (record.getType() == null || !types.contains(record.getType().toUpperCase())) {
-                            continue;
-                        }
-                        if (Durations.hasElapsed(record.getDuration(), record.getCreated(), now)) {
-                            continue;
-                        }
-                        ids.add(record.getId());
-                        if (!all) {
-                            break;
-                        }
-                    }
-                    affected = plugin.database().deactivateIds(ids);
-                } catch (Exception ex) {
-                    plugin.getLogger().log(Level.SEVERE,
-                            "Could not roll back the escalation of " + resolved.name, ex);
-                    return;
-                }
-                if (affected == 0) {
-                    return;
-                }
-                Bukkit.getScheduler().runTask(plugin, new Runnable() {
-                    @Override
-                    public void run() {
-                        plugin.config().messages().send(sender, "reverted", Messages.map(
-                                "target", resolved.name,
-                                "count", String.valueOf(affected)));
-                    }
-                });
-            }
-        });
     }
 
     private String firstNonFlag(String[] parts) {

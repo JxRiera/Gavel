@@ -49,8 +49,13 @@ public final class ConfigManager {
     private ExecuteAs executeAs = ExecuteAs.PLAYER;
     private Map<String, String> commandTemplates = new LinkedHashMap<String, String>();
     private String silentFlag = "-s";
+    private String broadcastFlag = "";
+    private boolean liteBansIpBansByDefault;
+    private boolean liteBansSilentByDefault;
     private List<String> postCommands = new ArrayList<String>();
     private long duplicateWindowMillis = 5000L;
+    private boolean confirmWithApi = true;
+    private long confirmTimeoutMillis = 3000L;
     private boolean verifyPermissions = true;
     private Map<String, String> liteBansPermissions = new LinkedHashMap<String, String>();
 
@@ -119,8 +124,13 @@ public final class ConfigManager {
                 config.getString("execution.execute-as", "PLAYER"), "PLAYER", "PLAYER", "CONSOLE"));
         commandTemplates = readStringMap(config.getConfigurationSection("execution.commands"), false);
         silentFlag = config.getString("execution.silent-flag", "-s");
+        broadcastFlag = config.getString("execution.broadcast-flag", "");
+        liteBansIpBansByDefault = config.getBoolean("execution.litebans-defaults.ip-bans", false);
+        liteBansSilentByDefault = config.getBoolean("execution.litebans-defaults.silent", false);
         postCommands = config.getStringList("execution.post-commands");
         duplicateWindowMillis = Math.max(0, config.getInt("execution.duplicate-window-seconds", 5)) * 1000L;
+        confirmWithApi = config.getBoolean("execution.confirm-with-api", true);
+        confirmTimeoutMillis = Math.max(250L, config.getLong("execution.confirm-timeout-ms", 3000L));
         verifyPermissions = config.getBoolean("execution.verify-permissions", true);
         liteBansPermissions = readStringMap(config.getConfigurationSection("execution.permissions"), true);
 
@@ -448,12 +458,32 @@ public final class ConfigManager {
         return silentFlag;
     }
 
+    public String getBroadcastFlag() {
+        return broadcastFlag;
+    }
+
+    public boolean isLiteBansIpBansByDefault() {
+        return liteBansIpBansByDefault;
+    }
+
+    public boolean isLiteBansSilentByDefault() {
+        return liteBansSilentByDefault;
+    }
+
     public List<String> getPostCommands() {
         return postCommands;
     }
 
     public long getDuplicateWindowMillis() {
         return duplicateWindowMillis;
+    }
+
+    public boolean isConfirmWithApi() {
+        return confirmWithApi;
+    }
+
+    public long getConfirmTimeoutMillis() {
+        return confirmTimeoutMillis;
     }
 
     public boolean isVerifyPermissions() {

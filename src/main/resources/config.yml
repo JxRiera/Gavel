@@ -48,7 +48,22 @@ execution:
     warn-perm: 'warn %flags%%target% %reason%'
     kick: 'kick %flags%%target% %reason%'
 
+  # Flag appended when the punishment must be silent.
   silent-flag: '-s'
+
+  # Appended when the punishment must NOT be silent. Only useful when LiteBans is
+  # set to broadcast silently by default and offers a flag to force the broadcast.
+  broadcast-flag: ''
+
+  # What LiteBans does on its own, regardless of the flags Gavel passes.
+  # Set these to match your LiteBans configuration so the history and the messages
+  # describe what really happened. When the LiteBans API confirms a punishment its
+  # own record wins over these values.
+  litebans-defaults:
+    # Every ban is applied as an IP ban (LiteBans 'default_ban_ip').
+    ip-bans: false
+    # Every punishment is broadcast silently.
+    silent: false
 
   # Check the LiteBans permission before dispatching. dispatchCommand cannot
   # report a denial, so without this a refused command still counts as applied.
@@ -64,13 +79,22 @@ execution:
   # members acting at once cannot both apply the same tier. 0 disables it.
   duplicate-window-seconds: 5
 
+  # Wait for LiteBans to report the punishment through its API before recording the
+  # offence. Without this, a command LiteBans silently refuses still advances the
+  # escalation counter. Ignored when the LiteBans API is unavailable.
+  confirm-with-api: true
+  confirm-timeout-ms: 3000
+
   # Console commands run after a successful punishment.
   # Placeholders: %target% %staff% %category% %type% %duration% %reason% %offense%
   post-commands: []
 
 revert:
   # Roll the escalation counter back when a punishment is lifted in LiteBans.
-  # The command is not cancelled, LiteBans runs it and Gavel reacts afterwards.
+  # With the LiteBans API available this follows every unban, whatever issued it,
+  # and the command list below is ignored. Without the API, Gavel falls back to
+  # watching the commands: they are not cancelled, LiteBans runs them and Gavel
+  # reacts one tick later.
   enabled: true
 
   # LATEST rolls back the most recent matching offence, ALL clears every one.
