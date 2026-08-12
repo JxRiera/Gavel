@@ -18,6 +18,7 @@ category-no-permission: '%prefix%&cYou do not have permission for category &f%ca
 missing-litebans-permission: '%prefix%&cYou are missing the LiteBans permission &f%permission%&c, nothing was applied.'
 silent-no-permission: '%prefix%&cYou cannot punish silently, applying it normally.'
 duplicate-punishment: '%prefix%&c%target% was just punished, wait a moment before trying again.'
+not-applied: '%prefix%&cLiteBans never registered the punishment for &f%target%&c, nothing was recorded.'
 template-missing: '%prefix%&cMissing command template &f%template% &cin config.yml.'
 db-error: '%prefix%&cDatabase error, check the console.'
 

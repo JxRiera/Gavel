@@ -51,6 +51,8 @@ public final class ConfigManager {
     private String silentFlag = "-s";
     private List<String> postCommands = new ArrayList<String>();
     private long duplicateWindowMillis = 5000L;
+    private boolean confirmWithApi = true;
+    private long confirmTimeoutMillis = 3000L;
     private boolean verifyPermissions = true;
     private Map<String, String> liteBansPermissions = new LinkedHashMap<String, String>();
 
@@ -121,6 +123,8 @@ public final class ConfigManager {
         silentFlag = config.getString("execution.silent-flag", "-s");
         postCommands = config.getStringList("execution.post-commands");
         duplicateWindowMillis = Math.max(0, config.getInt("execution.duplicate-window-seconds", 5)) * 1000L;
+        confirmWithApi = config.getBoolean("execution.confirm-with-api", true);
+        confirmTimeoutMillis = Math.max(250L, config.getLong("execution.confirm-timeout-ms", 3000L));
         verifyPermissions = config.getBoolean("execution.verify-permissions", true);
         liteBansPermissions = readStringMap(config.getConfigurationSection("execution.permissions"), true);
 
@@ -454,6 +458,14 @@ public final class ConfigManager {
 
     public long getDuplicateWindowMillis() {
         return duplicateWindowMillis;
+    }
+
+    public boolean isConfirmWithApi() {
+        return confirmWithApi;
+    }
+
+    public long getConfirmTimeoutMillis() {
+        return confirmTimeoutMillis;
     }
 
     public boolean isVerifyPermissions() {

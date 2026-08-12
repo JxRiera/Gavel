@@ -64,13 +64,22 @@ execution:
   # members acting at once cannot both apply the same tier. 0 disables it.
   duplicate-window-seconds: 5
 
+  # Wait for LiteBans to report the punishment through its API before recording the
+  # offence. Without this, a command LiteBans silently refuses still advances the
+  # escalation counter. Ignored when the LiteBans API is unavailable.
+  confirm-with-api: true
+  confirm-timeout-ms: 3000
+
   # Console commands run after a successful punishment.
   # Placeholders: %target% %staff% %category% %type% %duration% %reason% %offense%
   post-commands: []
 
 revert:
   # Roll the escalation counter back when a punishment is lifted in LiteBans.
-  # The command is not cancelled, LiteBans runs it and Gavel reacts afterwards.
+  # With the LiteBans API available this follows every unban, whatever issued it,
+  # and the command list below is ignored. Without the API, Gavel falls back to
+  # watching the commands: they are not cancelled, LiteBans runs them and Gavel
+  # reacts one tick later.
   enabled: true
 
   # LATEST rolls back the most recent matching offence, ALL clears every one.
