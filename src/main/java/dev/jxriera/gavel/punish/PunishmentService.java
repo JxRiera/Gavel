@@ -218,6 +218,24 @@ public final class PunishmentService {
                 "category", category.getId(),
                 "offense", String.valueOf(result.getOffenseNumber())));
         Sounds.play(staff, plugin.config().getSoundApply());
+
+        if (!storedSilent || plugin.config().isWebhookIncludeSilent()) {
+            Map<String, String> hook = new HashMap<String, String>();
+            hook.put("target", targetName);
+            hook.put("target_uuid", targetId == null ? "" : targetId.toString());
+            hook.put("staff", staff.getName());
+            hook.put("staff_uuid", staff.getUniqueId().toString());
+            hook.put("category", category.getId());
+            hook.put("type", messages.word(storedType.wordKey()));
+            hook.put("duration", durationText.isEmpty()
+                    ? messages.word("none") : durationText);
+            hook.put("reason", tier.getReason());
+            hook.put("offense", String.valueOf(result.getOffenseNumber()));
+            hook.put("silent", messages.bool(storedSilent));
+            hook.put("server", plugin.config().getServerName());
+            hook.put("date", dev.jxriera.gavel.webhook.Webhook.now(messages.dateFormat()));
+            plugin.webhook().send("applied", hook);
+        }
     }
 
     private boolean dispatch(Player staff, String command) {

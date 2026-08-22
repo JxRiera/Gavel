@@ -2,6 +2,7 @@ package dev.jxriera.gavel;
 
 import dev.jxriera.gavel.command.GavelCommand;
 import dev.jxriera.gavel.config.ConfigManager;
+import dev.jxriera.gavel.config.UpdateNotice;
 import dev.jxriera.gavel.gui.Menu;
 import dev.jxriera.gavel.gui.MenuListener;
 import dev.jxriera.gavel.listener.CommandInterceptor;
@@ -11,6 +12,7 @@ import dev.jxriera.gavel.punish.DispatchGuard;
 import dev.jxriera.gavel.punish.PunishmentService;
 import dev.jxriera.gavel.stats.OffenseCache;
 import dev.jxriera.gavel.storage.Database;
+import dev.jxriera.gavel.webhook.Webhook;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
@@ -27,6 +29,8 @@ public final class Gavel extends JavaPlugin {
     private LiteBansBridge liteBans;
     private EscalationRollback rollback;
     private OffenseCache cache;
+    private Webhook webhook;
+    private UpdateNotice updateNotice;
 
     @Override
     public void onEnable() {
@@ -61,8 +65,12 @@ public final class Gavel extends JavaPlugin {
         this.liteBans = new LiteBansBridge(this);
         liteBans.enable();
         this.cache = new OffenseCache(this);
+        this.webhook = new Webhook(this);
+        this.updateNotice = new UpdateNotice(this);
+        updateNotice.check(getDescription().getVersion(), config.getMigrationAdditions());
 
         Bukkit.getPluginManager().registerEvents(cache, this);
+        Bukkit.getPluginManager().registerEvents(updateNotice, this);
         Bukkit.getPluginManager().registerEvents(new MenuListener(), this);
         Bukkit.getPluginManager().registerEvents(new CommandInterceptor(this), this);
 
@@ -122,6 +130,14 @@ public final class Gavel extends JavaPlugin {
 
     public LiteBansBridge liteBans() {
         return liteBans;
+    }
+
+    public UpdateNotice updateNotice() {
+        return updateNotice;
+    }
+
+    public Webhook webhook() {
+        return webhook;
     }
 
     public OffenseCache cache() {

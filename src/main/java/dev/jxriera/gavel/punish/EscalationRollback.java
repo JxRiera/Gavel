@@ -68,6 +68,14 @@ public final class EscalationRollback {
                     return;
                 }
                 plugin.cache().refresh(targetId);
+                java.util.Map<String, String> hook = new java.util.HashMap<String, String>();
+                hook.put("target", displayName);
+                hook.put("target_uuid", targetId == null ? "" : targetId.toString());
+                hook.put("count", String.valueOf(affected));
+                hook.put("server", plugin.config().getServerName());
+                hook.put("date", dev.jxriera.gavel.webhook.Webhook.now(
+                        plugin.config().messages().dateFormat()));
+                plugin.webhook().send("reverted", hook);
                 announce(displayName, affected, notifyPlayerId, notifyConsole);
             }
         });

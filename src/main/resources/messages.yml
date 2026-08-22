@@ -25,8 +25,17 @@ db-error: '%prefix%&cDatabase error, check the console.'
 reloaded: '%prefix%&aConfiguration reloaded. &7Categories: &f%count%'
 reload-failed: '%prefix%&cReload failed, check the console.'
 cleared: '%prefix%&aCleared &f%count% &7record(s) for &f%target%&7.'
+undone: '%prefix%&aUndid the &f%type% &7of &f%target% &8(&7%reason%&8)'
+nothing-to-undo: '%prefix%&c%target% has no punishment applied through Gavel to undo.'
 reverted: '%prefix%&7Escalation rolled back for &f%target%&7: &f%count% &7record(s) no longer count.'
 version: '%prefix%&fGavel &7v%version% &8| &7storage: &f%storage%'
+acknowledged: '%prefix%&aUpdate reminder cleared.'
+
+update:
+  notice: |-
+    %prefix%&e&lGavel was updated: &f%previous% &e&l-> &f%current%
+    %prefix%&e%added% &7new option(s) were added to your configuration files.
+    %prefix%&7Review them, then run &f/gavel ack &7to stop this reminder.
 
 stats:
   server-header: '%prefix%&fActive offences: &e%total%'
@@ -41,6 +50,8 @@ usage: |-
   &8 » &f/gavel <player> &7open the overlay
   &8 » &f/gavel history <player> &7view history
   &8 » &f/gavel clear <player> [category] &7reset the escalation counter
+  &8 » &f/gavel undo <player> &7lift the last punishment Gavel applied
+  &8 » &f/gavel ack &7clear the update reminder
   &8 » &f/gavel stats [player] &7counts by category and staff
   &8 » &f/gavel reload &7reload the configuration
 

@@ -20,6 +20,8 @@ public final class LiteBansBridge {
 
     private final Gavel plugin;
     private final Confirmations confirmations = new Confirmations();
+    private final java.util.Map<String, Long> suppressed =
+            new java.util.concurrent.ConcurrentHashMap<String, Long>();
     private Events.Listener listener;
     private BukkitTask expiryTask;
     private boolean available;
@@ -113,6 +115,28 @@ public final class LiteBansBridge {
         }
     }
 
+    public void suppressRemoval(UUID target, PunishmentType type, long millis) {
+        if (target == null || type == null) {
+            return;
+        }
+        suppressed.put(suppressionKey(target, Confirmations.family(type)),
+                System.currentTimeMillis() + millis);
+    }
+
+    private boolean isSuppressed(UUID target, String family) {
+        String key = suppressionKey(target, family);
+        Long until = suppressed.get(key);
+        if (until == null) {
+            return false;
+        }
+        suppressed.remove(key);
+        return until >= System.currentTimeMillis();
+    }
+
+    private static String suppressionKey(UUID target, String family) {
+        return target + "/" + family;
+    }
+
     private void onEntryRemoved(Entry entry) {
         try {
             debugEntry("entryRemoved", entry);
@@ -129,6 +153,9 @@ public final class LiteBansBridge {
             Set<String> types = Confirmations.typesOf(Confirmations.familyOf(entry.getType()));
             UUID targetId = parseUuid(entry.getUuid());
             if (types.isEmpty() || targetId == null) {
+                return;
+            }
+            if (isSuppressed(targetId, Confirmations.familyOf(entry.getType()))) {
                 return;
             }
             plugin.rollback().rollback(Targets.storageKey(targetId, targetId.toString()),

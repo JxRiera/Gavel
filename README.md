@@ -61,6 +61,8 @@ Durations use `s m h d w mo y` or `perm`.
 | `/gavel history <player>` | `gavel.history` |
 | `/gavel stats [player]` | `gavel.stats` |
 | `/gavel clear <player> [category]` | `gavel.admin` |
+| `/gavel undo <player>` | `gavel.undo` |
+| `/gavel ack` | `gavel.admin` |
 | `/gavel reload` | `gavel.admin` |
 | `/gavel version` | `gavel.admin` |
 
@@ -74,6 +76,7 @@ Durations use `s m h d w mo y` or `perm`.
 | `gavel.silent` | Silent punishments with shift-click |
 | `gavel.history` | A player's history |
 | `gavel.stats` | Counts by category and staff member |
+| `gavel.undo` | Lift the last punishment Gavel applied |
 | `gavel.admin` | `reload`, `clear` and `version` |
 
 ## Good to know
@@ -85,6 +88,16 @@ Durations use `s m h d w mo y` or `perm`.
   from one that no longer exists.
 - `execution.commands` are templates, so a LiteBans build with different command names is a config
   change rather than a recompile.
+- New options are added to `config.yml` and `messages.yml` on startup without touching the values
+  or the comments already in them. The previous file is kept as `<name>.backup`, and if the merge
+  cannot be proven safe the file is left alone and the reason is logged.
+- After a version change the console gets a banner listing what was added, and admins are told in
+  chat when they join until someone runs `/gavel ack`. The reminder survives restarts.
+- `/gavel undo <player>` drops the last offence Gavel recorded and lifts it in LiteBans, for the
+  mis-click a one-click menu makes easy.
+- `webhook` posts every punishment and rollback to an HTTP endpoint. The payloads are templates,
+  so the default Discord embed can become any format. The URL is treated as a secret and is never
+  written to the log.
 - Player names must match exactly. A partial name is rejected instead of guessed.
 - `gavel.bypass` defaults to false on purpose. A blanket `*` permission hands it out and the
   overlay stops opening.

@@ -17,16 +17,27 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 
 public final class ConfigManager {
+    private static final Set<String> MIGRATED =
+            new HashSet<String>(Arrays.asList("config.yml", "messages.yml"));
+
     public enum ExecuteAs {
         PLAYER,
         CONSOLE
@@ -35,6 +46,7 @@ public final class ConfigManager {
 
     private final Gavel plugin;
     private final Messages messages = new Messages();
+    private final List<String> migrationAdditions = new ArrayList<String>();
 
     private String serverName = "main";
     private boolean debug;
@@ -53,6 +65,12 @@ public final class ConfigManager {
     private boolean liteBansIpBansByDefault;
     private boolean liteBansSilentByDefault;
     private List<String> postCommands = new ArrayList<String>();
+    private Map<String, String> undoCommands = new LinkedHashMap<String, String>();
+    private boolean webhookEnabled;
+    private String webhookUrl = "";
+    private boolean webhookIncludeSilent = true;
+    private int webhookTimeoutMillis = 5000;
+    private Map<String, String> webhookPayloads = new LinkedHashMap<String, String>();
     private long duplicateWindowMillis = 5000L;
     private boolean confirmWithApi = true;
     private long confirmTimeoutMillis = 3000L;
@@ -100,7 +118,12 @@ public final class ConfigManager {
         return messages;
     }
 
+    public List<String> getMigrationAdditions() {
+        return migrationAdditions;
+    }
+
     public void load() {
+        migrationAdditions.clear();
         plugin.saveDefaultConfig();
         plugin.reloadConfig();
         FileConfiguration config = plugin.getConfig();
@@ -131,6 +154,12 @@ public final class ConfigManager {
         liteBansIpBansByDefault = config.getBoolean("execution.litebans-defaults.ip-bans", false);
         liteBansSilentByDefault = config.getBoolean("execution.litebans-defaults.silent", false);
         postCommands = config.getStringList("execution.post-commands");
+        undoCommands = readStringMap(config.getConfigurationSection("execution.undo-commands"), true);
+        webhookEnabled = config.getBoolean("webhook.enabled", false);
+        webhookUrl = config.getString("webhook.url", "");
+        webhookIncludeSilent = config.getBoolean("webhook.include-silent", true);
+        webhookTimeoutMillis = Math.max(500, config.getInt("webhook.timeout-ms", 5000));
+        webhookPayloads = readStringMap(config.getConfigurationSection("webhook.payloads"), false);
         duplicateWindowMillis = Math.max(0, config.getInt("execution.duplicate-window-seconds", 5)) * 1000L;
         confirmWithApi = config.getBoolean("execution.confirm-with-api", true);
         confirmTimeoutMillis = Math.max(250L, config.getLong("execution.confirm-timeout-ms", 3000L));
@@ -190,8 +219,59 @@ public final class ConfigManager {
         File file = new File(plugin.getDataFolder(), name);
         if (!file.isFile()) {
             plugin.saveResource(name, false);
+        } else if (MIGRATED.contains(name)) {
+            migrate(file, name);
         }
         return YamlConfiguration.loadConfiguration(file);
+    }
+
+    private void migrate(File file, String name) {
+        try {
+            String defaults = readResource(name);
+            if (defaults == null) {
+                return;
+            }
+            String current = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+            YamlMerger.Result result = YamlMerger.merge(defaults, current);
+            if (result.getFailure() != null) {
+                plugin.getLogger().warning(name + " was left untouched: " + result.getFailure());
+                return;
+            }
+            if (!result.isChanged()) {
+                return;
+            }
+            File backup = new File(file.getParentFile(), name + ".backup");
+            Files.copy(file.toPath(), backup.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Files.write(file.toPath(), result.getText().getBytes(StandardCharsets.UTF_8));
+            migrationAdditions.addAll(result.getAdded());
+            plugin.getLogger().info("Added " + result.getAdded().size() + " new option(s) to " + name
+                    + ", your values and comments were kept and the previous file is at "
+                    + backup.getName() + ": " + result.getAdded());
+        } catch (Exception ex) {
+            plugin.getLogger().log(Level.WARNING, name + " could not be updated automatically", ex);
+        }
+    }
+
+    private String readResource(String name) throws IOException {
+        InputStream stream = plugin.getResource(name);
+        if (stream == null) {
+            return null;
+        }
+        try {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] chunk = new byte[4096];
+            int read;
+            while ((read = stream.read(chunk)) != -1) {
+                buffer.write(chunk, 0, read);
+            }
+            return new String(buffer.toByteArray(), StandardCharsets.UTF_8);
+        } finally {
+            try {
+                stream.close();
+            } catch (IOException ignored) {
+                return null;
+            }
+        }
     }
 
     private Map<String, String> readStringMap(ConfigurationSection section, boolean upperCaseKeys) {
@@ -496,6 +576,30 @@ public final class ConfigManager {
 
     public long getConfirmTimeoutMillis() {
         return confirmTimeoutMillis;
+    }
+
+    public String getUndoCommand(PunishmentType type) {
+        return type == null ? null : undoCommands.get(type.name());
+    }
+
+    public boolean isWebhookEnabled() {
+        return webhookEnabled;
+    }
+
+    public String getWebhookUrl() {
+        return webhookUrl;
+    }
+
+    public boolean isWebhookIncludeSilent() {
+        return webhookIncludeSilent;
+    }
+
+    public int getWebhookTimeoutMillis() {
+        return webhookTimeoutMillis;
+    }
+
+    public String getWebhookPayload(String key) {
+        return key == null ? null : webhookPayloads.get(key.toLowerCase(Locale.ROOT));
     }
 
     public boolean isVerifyPermissions() {

@@ -8,6 +8,7 @@ import dev.jxriera.gavel.gui.PunishMenu;
 import dev.jxriera.gavel.escalation.EscalationEngine;
 import dev.jxriera.gavel.model.Category;
 import dev.jxriera.gavel.model.OffenseRecord;
+import dev.jxriera.gavel.model.PunishmentType;
 import dev.jxriera.gavel.util.Sounds;
 import dev.jxriera.gavel.util.Targets;
 import org.bukkit.Bukkit;
@@ -78,6 +79,29 @@ public final class GavelCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
             clear(sender, args[1], args.length >= 3 ? args[2] : null);
+            return true;
+        }
+
+        if (sub.equals("undo")) {
+            if (!sender.hasPermission("gavel.undo")) {
+                messages.send(sender, "no-permission");
+                return true;
+            }
+            if (args.length < 2) {
+                messages.send(sender, "usage");
+                return true;
+            }
+            undo(sender, args[1]);
+            return true;
+        }
+
+        if (sub.equals("ack")) {
+            if (!sender.hasPermission("gavel.admin")) {
+                messages.send(sender, "no-permission");
+                return true;
+            }
+            plugin.updateNotice().acknowledge();
+            messages.send(sender, "acknowledged");
             return true;
         }
 
@@ -232,6 +256,78 @@ public final class GavelCommand implements CommandExecutor, TabCompleter {
         });
     }
 
+    private void undo(final CommandSender sender, final String targetName) {
+        final Messages messages = plugin.config().messages();
+        if (!Targets.isValidName(targetName)) {
+            messages.send(sender, "unknown-player", Messages.map("target", targetName));
+            return;
+        }
+        Targets.resolve(plugin, targetName, new Targets.Callback() {
+            @Override
+            public void done(final Targets.Resolved resolved) {
+                final String key = Targets.storageKey(resolved.uuid, resolved.name);
+                Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
+                    @Override
+                    public void run() {
+                        OffenseRecord latest = null;
+                        try {
+                            for (OffenseRecord record : plugin.database().find(key, true)) {
+                                latest = record;
+                                break;
+                            }
+                            if (latest != null) {
+                                plugin.database().deactivateIds(
+                                        Collections.singletonList(latest.getId()));
+                            }
+                        } catch (Exception ex) {
+                            plugin.getLogger().log(Level.SEVERE, "Could not undo the punishment", ex);
+                            reply(sender, "db-error", null);
+                            return;
+                        }
+                        final OffenseRecord undone = latest;
+                        Bukkit.getScheduler().runTask(plugin, new Runnable() {
+                            @Override
+                            public void run() {
+                                finishUndo(sender, resolved, undone);
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    private void finishUndo(CommandSender sender, Targets.Resolved resolved, OffenseRecord undone) {
+        Messages messages = plugin.config().messages();
+        if (undone == null) {
+            messages.send(sender, "nothing-to-undo", Messages.map("target", resolved.name));
+            return;
+        }
+        plugin.cache().refresh(resolved.uuid, resolved.name);
+
+        PunishmentType type = PunishmentType.parse(undone.getType(), null);
+        String template = plugin.config().getUndoCommand(type);
+        if (type != null && template != null && !template.trim().isEmpty()) {
+            if (plugin.liteBans() != null && resolved.uuid != null) {
+                plugin.liteBans().suppressRemoval(resolved.uuid, type, 10000L);
+            }
+            String command = template.replace("%target%", resolved.name);
+            plugin.guard().enter(null);
+            try {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+            } catch (Throwable ex) {
+                plugin.getLogger().log(Level.WARNING, "Could not run '/" + command + "'", ex);
+            } finally {
+                plugin.guard().exit(null);
+            }
+        }
+        messages.send(sender, "undone", Messages.map(
+                "target", resolved.name,
+                "type", type == null ? undone.getType() : messages.word(type.wordKey()),
+                "category", undone.getCategory(),
+                "reason", undone.getReason()));
+    }
+
     private void stats(final CommandSender sender, final String targetName) {
         final Messages messages = plugin.config().messages();
         if (targetName == null) {
@@ -345,6 +441,12 @@ public final class GavelCommand implements CommandExecutor, TabCompleter {
                 options.add("clear");
                 options.add("version");
             }
+            if (sender.hasPermission("gavel.undo")) {
+                options.add("undo");
+            }
+            if (sender.hasPermission("gavel.admin") && plugin.updateNotice().isPending()) {
+                options.add("ack");
+            }
             if (sender.hasPermission("gavel.history")) {
                 options.add("history");
             }
@@ -363,7 +465,7 @@ public final class GavelCommand implements CommandExecutor, TabCompleter {
             return out;
         }
         if (args.length == 2 && (args[0].equalsIgnoreCase("history") || args[0].equalsIgnoreCase("clear")
-                || args[0].equalsIgnoreCase("stats"))) {
+                || args[0].equalsIgnoreCase("stats") || args[0].equalsIgnoreCase("undo"))) {
             String prefix = args[1].toLowerCase();
             for (Player online : Bukkit.getOnlinePlayers()) {
                 if (online.getName().toLowerCase().startsWith(prefix)) {

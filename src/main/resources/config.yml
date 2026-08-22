@@ -85,6 +85,15 @@ execution:
   confirm-with-api: true
   confirm-timeout-ms: 3000
 
+  # Commands used by /gavel undo to lift a punishment again.
+  # An empty value means the record is dropped without touching LiteBans.
+  undo-commands:
+    BAN: 'unban %target%'
+    IPBAN: 'unbanip %target%'
+    MUTE: 'unmute %target%'
+    WARN: 'unwarn %target%'
+    KICK: ''
+
   # Console commands run after a successful punishment.
   # Placeholders: %target% %staff% %category% %type% %duration% %reason% %offense%
   post-commands: []
@@ -157,6 +166,38 @@ database:
 
   # SQLITE only, relative to the plugin folder.
   file: 'gavel.db'
+
+webhook:
+  # Posts every punishment to an HTTP endpoint. The default payload is the
+  # Discord embed format; any endpoint works by rewriting the payloads below.
+  enabled: false
+
+  # Treat this as a secret. It is never written to the log.
+  url: ''
+
+  # Also post punishments that were applied silently.
+  include-silent: true
+
+  timeout-ms: 5000
+
+  # Placeholders are escaped for JSON before being inserted.
+  # %target% %target_uuid% %staff% %staff_uuid% %category% %type% %duration%
+  # %reason% %offense% %silent% %server% %date%
+  payloads:
+    applied: |-
+      {"embeds":[{"title":"%type% - %target%","color":15158332,"fields":[
+        {"name":"Reason","value":"%reason%","inline":true},
+        {"name":"Duration","value":"%duration%","inline":true},
+        {"name":"Category","value":"%category% (#%offense%)","inline":true},
+        {"name":"Staff","value":"%staff%","inline":true},
+        {"name":"Server","value":"%server%","inline":true},
+        {"name":"Silent","value":"%silent%","inline":true}],
+        "footer":{"text":"%date%"}}]}
+    reverted: |-
+      {"embeds":[{"title":"Rolled back - %target%","color":3066993,"fields":[
+        {"name":"Records","value":"%count%","inline":true},
+        {"name":"Server","value":"%server%","inline":true}],
+        "footer":{"text":"%date%"}}]}
 
 # Unknown sound names are ignored, empty values disable the sound.
 sounds:

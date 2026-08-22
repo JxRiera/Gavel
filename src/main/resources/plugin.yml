@@ -31,6 +31,9 @@ permissions:
   gavel.stats:
     description: View the punishment statistics.
     default: op
+  gavel.undo:
+    description: Undo the last punishment Gavel applied to a player.
+    default: op
   gavel.silent:
     description: Apply punishments silently.
     default: op
