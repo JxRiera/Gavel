@@ -9,6 +9,7 @@ import dev.jxriera.gavel.litebans.LiteBansBridge;
 import dev.jxriera.gavel.punish.EscalationRollback;
 import dev.jxriera.gavel.punish.DispatchGuard;
 import dev.jxriera.gavel.punish.PunishmentService;
+import dev.jxriera.gavel.stats.OffenseCache;
 import dev.jxriera.gavel.storage.Database;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
@@ -25,6 +26,7 @@ public final class Gavel extends JavaPlugin {
     private DispatchGuard guard;
     private LiteBansBridge liteBans;
     private EscalationRollback rollback;
+    private OffenseCache cache;
 
     @Override
     public void onEnable() {
@@ -58,7 +60,9 @@ public final class Gavel extends JavaPlugin {
         this.rollback = new EscalationRollback(this);
         this.liteBans = new LiteBansBridge(this);
         liteBans.enable();
+        this.cache = new OffenseCache(this);
 
+        Bukkit.getPluginManager().registerEvents(cache, this);
         Bukkit.getPluginManager().registerEvents(new MenuListener(), this);
         Bukkit.getPluginManager().registerEvents(new CommandInterceptor(this), this);
 
@@ -68,6 +72,8 @@ public final class Gavel extends JavaPlugin {
             command.setExecutor(executor);
             command.setTabCompleter(executor);
         }
+
+        registerPlaceholders();
 
         getLogger().info("Enabled with " + config.getCategories().size() + " categories, running commands as "
                 + config.getExecuteAs() + ".");
@@ -116,6 +122,22 @@ public final class Gavel extends JavaPlugin {
 
     public LiteBansBridge liteBans() {
         return liteBans;
+    }
+
+    public OffenseCache cache() {
+        return cache;
+    }
+
+    private void registerPlaceholders() {
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") == null) {
+            return;
+        }
+        try {
+            new dev.jxriera.gavel.placeholder.GavelExpansion(this).register();
+            getLogger().info("Registered the PlaceholderAPI expansion: %gavel_...%");
+        } catch (Throwable ex) {
+            getLogger().log(Level.WARNING, "Could not register the PlaceholderAPI expansion", ex);
+        }
     }
 
     public EscalationRollback rollback() {

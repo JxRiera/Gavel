@@ -59,6 +59,7 @@ Durations use `s m h d w mo y` or `perm`.
 |---|---|
 | `/gavel <player>` | `gavel.use` |
 | `/gavel history <player>` | `gavel.history` |
+| `/gavel stats [player]` | `gavel.stats` |
 | `/gavel clear <player> [category]` | `gavel.admin` |
 | `/gavel reload` | `gavel.admin` |
 | `/gavel version` | `gavel.admin` |
@@ -72,6 +73,7 @@ Durations use `s m h d w mo y` or `perm`.
 | `gavel.category.<id>` | One category |
 | `gavel.silent` | Silent punishments with shift-click |
 | `gavel.history` | A player's history |
+| `gavel.stats` | Counts by category and staff member |
 | `gavel.admin` | `reload`, `clear` and `version` |
 
 ## Good to know
@@ -86,6 +88,14 @@ Durations use `s m h d w mo y` or `perm`.
 - Player names must match exactly. A partial name is rejected instead of guessed.
 - `gavel.bypass` defaults to false on purpose. A blanket `*` permission hands it out and the
   overlay stops opening.
+- `tracking.external-removals` decides whose unbans move the counter. `PLAYERS` ignores the
+  console, so an anticheat or a chargeback bot cannot roll back a staff decision; `ALL` accepts
+  every source and `GAVEL` accepts none. `tracking.ignored-executors` blocks specific names in
+  any mode.
+- With PlaceholderAPI installed, `%gavel_offenses%`, `%gavel_offenses_<category>%` and
+  `%gavel_next_type_<category>%` / `%gavel_next_duration_<category>%` / `%gavel_next_number_<category>%`
+  / `%gavel_next_reason_<category>%` are available. They read a cache refreshed on join and after
+  every punishment, so a scoreboard never touches the database.
 
 ## Build
 

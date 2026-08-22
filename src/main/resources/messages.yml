@@ -28,11 +28,20 @@ cleared: '%prefix%&aCleared &f%count% &7record(s) for &f%target%&7.'
 reverted: '%prefix%&7Escalation rolled back for &f%target%&7: &f%count% &7record(s) no longer count.'
 version: '%prefix%&fGavel &7v%version% &8| &7storage: &f%storage%'
 
+stats:
+  server-header: '%prefix%&fActive offences: &e%total%'
+  category-line: '&8 • &7%name%&8: &f%count%'
+  staff-header: '%prefix%&fBy staff member'
+  staff-line: '&8 • &7%name%&8: &f%count%'
+  player-header: '%prefix%&fActive offences of &e%target%&f: &e%total%'
+  empty: '&8 • &7none'
+
 usage: |-
   %prefix%&7Commands:
   &8 » &f/gavel <player> &7open the overlay
   &8 » &f/gavel history <player> &7view history
   &8 » &f/gavel clear <player> [category] &7reset the escalation counter
+  &8 » &f/gavel stats [player] &7counts by category and staff
   &8 » &f/gavel reload &7reload the configuration
 
 confirm:

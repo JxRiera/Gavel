@@ -20,11 +20,13 @@ repositories {
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     maven("https://oss.sonatype.org/content/repositories/snapshots/")
     maven("https://repo.codemc.io/repository/maven-public/")
+    maven("https://repo.helpch.at/releases/")
 }
 
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT")
     compileOnly("litebans:api:0.6.1")
+    compileOnly("me.clip:placeholderapi:2.11.6")
 
     implementation("org.xerial:sqlite-jdbc:3.45.3.0")
     implementation("com.mysql:mysql-connector-j:8.4.0") {

@@ -10,7 +10,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 public final class Database {
@@ -302,6 +304,36 @@ public final class Database {
                 closeQuietly(statement);
             }
         }
+    }
+
+    public Map<String, Integer> countByCategory(boolean onlyActive) throws SQLException {
+        return group("category", onlyActive);
+    }
+
+    public Map<String, Integer> countByStaff(boolean onlyActive) throws SQLException {
+        return group("staff_name", onlyActive);
+    }
+
+    private Map<String, Integer> group(String column, boolean onlyActive) throws SQLException {
+        String sql = "SELECT " + column + " AS bucket, COUNT(*) AS amount FROM " + table()
+                + (onlyActive ? " WHERE active = 1" : "")
+                + " GROUP BY " + column + " ORDER BY amount DESC";
+        Map<String, Integer> out = new LinkedHashMap<String, Integer>();
+        synchronized (lock) {
+            PreparedStatement statement = connection().prepareStatement(sql);
+            ResultSet results = null;
+            try {
+                results = statement.executeQuery();
+                while (results.next()) {
+                    String bucket = results.getString("bucket");
+                    out.put(bucket == null ? "?" : bucket, results.getInt("amount"));
+                }
+            } finally {
+                closeQuietly(results);
+                closeQuietly(statement);
+            }
+        }
+        return out;
     }
 
     public int deactivateIds(List<Long> ids) throws SQLException {

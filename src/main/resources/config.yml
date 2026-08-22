@@ -89,6 +89,18 @@ execution:
   # Placeholders: %target% %staff% %category% %type% %duration% %reason% %offense%
   post-commands: []
 
+tracking:
+  # Whose punishment removals roll the escalation counter back.
+  #   ALL     - anyone, including the console, anticheats and web panels
+  #   PLAYERS - only when a player ran the command; console and plugin removals
+  #             are ignored, so an anticheat or a chargeback bot cannot move it
+  #   GAVEL   - nothing external at all
+  external-removals: ALL
+
+  # Executor names Gavel always ignores, whatever the mode above says.
+  # Matches the name LiteBans records for the executor.
+  ignored-executors: []
+
 revert:
   # Roll the escalation counter back when a punishment is lifted in LiteBans.
   # With the LiteBans API available this follows every unban, whatever issued it,

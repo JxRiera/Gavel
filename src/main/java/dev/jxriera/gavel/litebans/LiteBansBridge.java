@@ -119,6 +119,13 @@ public final class LiteBansBridge {
             if (!plugin.config().isRevertEnabled()) {
                 return;
             }
+            if (!plugin.config().acceptsRemoval(entry.getRemovedByUUID(), entry.getRemovedByName())) {
+                if (plugin.config().isDebug()) {
+                    plugin.getLogger().info("Ignoring a removal by " + entry.getRemovedByName()
+                            + ": tracking.external-removals does not accept it.");
+                }
+                return;
+            }
             Set<String> types = Confirmations.typesOf(Confirmations.familyOf(entry.getType()));
             UUID targetId = parseUuid(entry.getUuid());
             if (types.isEmpty() || targetId == null) {

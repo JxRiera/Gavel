@@ -5,6 +5,7 @@ api-version: '1.16'
 authors: [jxriera]
 description: GUI punishment overlay with automatic escalation, built on top of LiteBans.
 depend: [LiteBans]
+softdepend: [PlaceholderAPI]
 
 commands:
   gavel:
@@ -26,6 +27,9 @@ permissions:
     default: op
   gavel.history:
     description: View a player's Gavel history.
+    default: op
+  gavel.stats:
+    description: View the punishment statistics.
     default: op
   gavel.silent:
     description: Apply punishments silently.

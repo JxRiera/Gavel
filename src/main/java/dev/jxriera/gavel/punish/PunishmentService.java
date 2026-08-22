@@ -268,8 +268,8 @@ public final class PunishmentService {
         }
     }
 
-    private void record(Player staff, UUID targetId, String targetName, Category category, Tier tier,
-                        PunishmentType storedType, boolean silent) {
+    private void record(Player staff, final UUID targetId, final String targetName, Category category,
+                        Tier tier, PunishmentType storedType, boolean silent) {
         final OffenseRecord record = new OffenseRecord(
                 0L,
                 Targets.storageKey(targetId, targetName),
@@ -294,6 +294,7 @@ public final class PunishmentService {
                 } catch (Exception ex) {
                     plugin.getLogger().log(Level.SEVERE, "Could not store the offence", ex);
                 }
+                plugin.cache().refresh(targetId, targetName);
             }
         });
     }

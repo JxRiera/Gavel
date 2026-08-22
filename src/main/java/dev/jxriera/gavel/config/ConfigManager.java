@@ -59,6 +59,9 @@ public final class ConfigManager {
     private boolean verifyPermissions = true;
     private Map<String, String> liteBansPermissions = new LinkedHashMap<String, String>();
 
+    private String externalRemovals = "ALL";
+    private Set<String> ignoredExecutors = new HashSet<String>();
+
     private boolean revertEnabled = true;
     private boolean revertAll;
     private Map<String, Set<String>> revertCommands = new LinkedHashMap<String, Set<String>>();
@@ -133,6 +136,15 @@ public final class ConfigManager {
         confirmTimeoutMillis = Math.max(250L, config.getLong("execution.confirm-timeout-ms", 3000L));
         verifyPermissions = config.getBoolean("execution.verify-permissions", true);
         liteBansPermissions = readStringMap(config.getConfigurationSection("execution.permissions"), true);
+
+        externalRemovals = readChoice("tracking.external-removals",
+                config.getString("tracking.external-removals", "ALL"), "ALL", "ALL", "PLAYERS", "GAVEL");
+        ignoredExecutors = new HashSet<String>();
+        for (String raw : config.getStringList("tracking.ignored-executors")) {
+            if (raw != null && !raw.trim().isEmpty()) {
+                ignoredExecutors.add(raw.trim().toLowerCase(Locale.ROOT));
+            }
+        }
 
         revertEnabled = config.getBoolean("revert.enabled", true);
         revertAll = "ALL".equals(readChoice("revert.scope",
@@ -496,6 +508,36 @@ public final class ConfigManager {
         }
         String node = liteBansPermissions.get(type.name());
         return node == null || node.trim().isEmpty() ? null : node.trim();
+    }
+
+    public boolean acceptsRemoval(String executorUuid, String executorName) {
+        return acceptsRemoval(externalRemovals, executorUuid, executorName, ignoredExecutors);
+    }
+
+    public static boolean acceptsRemoval(String mode, String executorUuid, String executorName,
+                                         Set<String> ignoredExecutors) {
+        if (executorName != null && ignoredExecutors != null
+                && ignoredExecutors.contains(executorName.trim().toLowerCase(Locale.ROOT))) {
+            return false;
+        }
+        if ("GAVEL".equals(mode)) {
+            return false;
+        }
+        if ("PLAYERS".equals(mode)) {
+            return isPlayerUuid(executorUuid);
+        }
+        return true;
+    }
+
+    private static boolean isPlayerUuid(String raw) {
+        if (raw == null || raw.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            return java.util.UUID.fromString(raw.trim()).getMostSignificantBits() != 0L;
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
     }
 
     public boolean isRevertEnabled() {

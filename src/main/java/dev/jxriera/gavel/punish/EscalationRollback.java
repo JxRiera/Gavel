@@ -25,6 +25,7 @@ public final class EscalationRollback {
     public void rollback(final String storageKey, final String fallbackName,
                          final Collection<String> types, final UUID notifyPlayerId,
                          final boolean notifyConsole) {
+        final UUID targetId = parseUuid(storageKey);
         if (storageKey == null || types == null || types.isEmpty()) {
             return;
         }
@@ -66,9 +67,21 @@ public final class EscalationRollback {
                     }
                     return;
                 }
+                plugin.cache().refresh(targetId);
                 announce(displayName, affected, notifyPlayerId, notifyConsole);
             }
         });
+    }
+
+    private static UUID parseUuid(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        try {
+            return UUID.fromString(raw);
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
     }
 
     private void announce(final String displayName, final int affected, final UUID notifyPlayerId,
