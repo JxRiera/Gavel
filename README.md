@@ -8,6 +8,8 @@ offences you configured, and picks the punishment from how many times that playe
 in that category. LiteBans still applies it, so broadcasts, history, cross-server sync and appeals
 keep working.
 
+Looking for assets for this project...
+
 ```
 Hacked Client  #1  ->  15d ban
 Hacked Client  #2  ->  25d ban
