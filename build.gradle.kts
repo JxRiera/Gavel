@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "dev.jxriera"
-version = "1.3.0"
+version = "1.4.0"
 
 val javaRelease = 8
 
@@ -65,7 +65,6 @@ tasks.shadowJar {
     mergeServiceFiles()
 
     relocate("org.bstats", "dev.jxriera.gavel.lib.bstats")
-    relocate("org.sqlite", "dev.jxriera.gavel.lib.sqlite")
     relocate("com.mysql", "dev.jxriera.gavel.lib.mysql")
     relocate("org.postgresql", "dev.jxriera.gavel.lib.postgresql")
 
