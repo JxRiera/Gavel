@@ -13,15 +13,21 @@ import dev.jxriera.gavel.punish.PunishmentService;
 import dev.jxriera.gavel.stats.OffenseCache;
 import dev.jxriera.gavel.storage.Database;
 import dev.jxriera.gavel.webhook.Webhook;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.SimplePie;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
+import java.util.concurrent.Callable;
 import java.util.logging.Level;
 
 public final class Gavel extends JavaPlugin {
+    // https://bstats.org/plugin/bukkit/Gavel/34618
+    private static final int BSTATS_ID = 34618;
+
     private ConfigManager config;
     private Database database;
     private PunishmentService punishments;
@@ -82,6 +88,7 @@ public final class Gavel extends JavaPlugin {
         }
 
         registerPlaceholders();
+        startMetrics();
 
         getLogger().info("Enabled with " + config.getCategories().size() + " categories, running commands as "
                 + config.getExecuteAs() + ".");
@@ -153,6 +160,29 @@ public final class Gavel extends JavaPlugin {
             getLogger().info("Registered the PlaceholderAPI expansion: %gavel_...%");
         } catch (Throwable ex) {
             getLogger().log(Level.WARNING, "Could not register the PlaceholderAPI expansion", ex);
+        }
+    }
+
+    private void startMetrics() {
+        if (BSTATS_ID <= 0) {
+            return;
+        }
+        try {
+            Metrics metrics = new Metrics(this, BSTATS_ID);
+            metrics.addCustomChart(new SimplePie("storage", new Callable<String>() {
+                @Override
+                public String call() {
+                    return database.dialect().name();
+                }
+            }));
+            metrics.addCustomChart(new SimplePie("execute_as", new Callable<String>() {
+                @Override
+                public String call() {
+                    return String.valueOf(config.getExecuteAs());
+                }
+            }));
+        } catch (Throwable ex) {
+            getLogger().log(Level.FINE, "bStats could not start", ex);
         }
     }
 

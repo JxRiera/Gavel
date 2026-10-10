@@ -1,5 +1,9 @@
 # Gavel
 
+[![Servers](https://img.shields.io/bstats/servers/34618?label=servers)](https://bstats.org/plugin/bukkit/Gavel/34618)
+[![Players](https://img.shields.io/bstats/players/34618?label=players)](https://bstats.org/plugin/bukkit/Gavel/34618)
+[![Visits](https://hits.sh/github.com/JxRiera/Gavel.svg?label=visits&color=4c1)](https://hits.sh/github.com/JxRiera/Gavel/)
+
 Punishment GUI for [LiteBans](https://www.spigotmc.org/resources/litebans.3715/) with automatic
 escalation.
 
@@ -100,6 +104,8 @@ Durations use `s m h d w mo y` or `perm`.
 - `webhook` posts every punishment and rollback to an HTTP endpoint. The payloads are templates,
   so the default Discord embed can become any format. The URL is treated as a secret and is never
   written to the log.
+- Gavel reports anonymous usage to [bStats](https://bstats.org): server and player counts, the
+  storage type and `execute-as`. Set `enabled: false` in `plugins/bStats/config.yml` to opt out.
 - Player names must match exactly. A partial name is rejected instead of guessed.
 - `gavel.bypass` defaults to false on purpose. A blanket `*` permission hands it out and the
   overlay stops opening.
@@ -124,5 +130,6 @@ Java 8. CI blocks a release until the tests pass, and publishes one when the ver
 
 ## License
 
-[Apache 2.0](LICENSE). Forks must keep the copyright notice, ship the contents of
-[NOTICE](NOTICE), and state which files they changed.
+[GPLv3](LICENSE). Anyone can use, modify and share Gavel. A fork or a redistributed copy, paid or
+free, must stay under the GPLv3 and ship its full source code, so nobody can close it and resell
+it. Versions up to and including 1.3.0 were released under Apache 2.0.

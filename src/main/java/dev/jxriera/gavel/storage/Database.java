@@ -38,6 +38,10 @@ public final class Database {
         this.settings = settings;
     }
 
+    public SqlDialect dialect() {
+        return settings.dialect;
+    }
+
     public String table() {
         return settings.tablePrefix + "offenses";
     }

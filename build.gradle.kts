@@ -28,6 +28,7 @@ dependencies {
     compileOnly("litebans:api:0.6.1")
     compileOnly("me.clip:placeholderapi:2.11.6")
 
+    implementation("org.bstats:bstats-bukkit:3.1.0")
     implementation("org.xerial:sqlite-jdbc:3.45.3.0")
     implementation("com.mysql:mysql-connector-j:8.4.0") {
         exclude(group = "com.google.protobuf")
@@ -63,6 +64,7 @@ tasks.shadowJar {
     archiveClassifier.set("")
     mergeServiceFiles()
 
+    relocate("org.bstats", "dev.jxriera.gavel.lib.bstats")
     relocate("org.sqlite", "dev.jxriera.gavel.lib.sqlite")
     relocate("com.mysql", "dev.jxriera.gavel.lib.mysql")
     relocate("org.postgresql", "dev.jxriera.gavel.lib.postgresql")
