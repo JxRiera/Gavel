@@ -182,7 +182,7 @@ public final class Gavel extends JavaPlugin {
                 }
             }));
         } catch (Throwable ex) {
-            getLogger().log(Level.FINE, "bStats could not start", ex);
+            getLogger().log(Level.WARNING, "bStats could not start", ex);
         }
     }
 
