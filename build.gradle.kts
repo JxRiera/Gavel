@@ -8,13 +8,6 @@ version = "1.4.0"
 
 val javaRelease = 8
 
-val excludedNatives = listOf(
-    "Linux-Android", "FreeBSD",
-    "Linux/ppc64", "Linux/x86", "Linux/arm", "Linux/armv6", "Linux/armv7",
-    "Linux-Musl/x86",
-    "Windows/x86", "Windows/armv7"
-)
-
 repositories {
     mavenCentral()
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
@@ -28,11 +21,11 @@ dependencies {
     compileOnly("litebans:api:0.6.1")
     compileOnly("me.clip:placeholderapi:2.11.6")
 
+    // Spigot and Paper ship the SQLite and MySQL drivers, so the server's copy is used.
+    // MySQL is loaded by name because Spigot 1.16 and 1.17 ship Connector/J 5.1.
+    compileOnly("org.xerial:sqlite-jdbc:3.45.3.0")
+
     implementation("org.bstats:bstats-bukkit:3.1.0")
-    implementation("org.xerial:sqlite-jdbc:3.45.3.0")
-    implementation("com.mysql:mysql-connector-j:8.4.0") {
-        exclude(group = "com.google.protobuf")
-    }
     implementation("org.postgresql:postgresql:42.7.4")
 
     testImplementation("org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT")
@@ -65,7 +58,6 @@ tasks.shadowJar {
     mergeServiceFiles()
 
     relocate("org.bstats", "dev.jxriera.gavel.lib.bstats")
-    relocate("com.mysql", "dev.jxriera.gavel.lib.mysql")
     relocate("org.postgresql", "dev.jxriera.gavel.lib.postgresql")
 
     from(rootProject.file("LICENSE")) { into("META-INF/gavel") }
@@ -73,9 +65,6 @@ tasks.shadowJar {
 
     exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
     exclude("org/checkerframework/**")
-    for (platform in excludedNatives) {
-        exclude("org/sqlite/native/$platform/**")
-    }
 }
 
 tasks.build {

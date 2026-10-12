@@ -4,6 +4,7 @@ import dev.jxriera.gavel.model.OffenseRecord;
 
 import java.io.File;
 import java.sql.Connection;
+import java.sql.Driver;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -87,6 +88,16 @@ public final class Database {
     }
 
     private Connection open() throws SQLException {
+        try {
+            return openWithDriver();
+        } catch (NoClassDefFoundError ex) {
+            throw new SQLException("The " + settings.dialect + " driver is not available on this server. "
+                    + "Spigot and Paper ship the SQLite and MySQL drivers; check that your server software "
+                    + "has not removed them.", ex);
+        }
+    }
+
+    private Connection openWithDriver() throws SQLException {
         Properties properties = new Properties();
         switch (settings.dialect) {
             case SQLITE: {
@@ -113,8 +124,7 @@ public final class Database {
                 if (settings.extraProperties != null && !settings.extraProperties.trim().isEmpty()) {
                     url.append('&').append(settings.extraProperties.trim());
                 }
-                Connection created = new com.mysql.cj.jdbc.NonRegisteringDriver()
-                        .connect(url.toString(), properties);
+                Connection created = mysqlDriver().connect(url.toString(), properties);
                 if (created == null) {
                     throw new SQLException("MySQL driver rejected the connection URL");
                 }
@@ -137,6 +147,21 @@ public final class Database {
             default:
                 throw new SQLException("Unsupported dialect: " + settings.dialect);
         }
+    }
+
+    // Connector/J 8+ on Paper and on Spigot 1.18+, Connector/J 5.1 on Spigot 1.16 and 1.17.
+    private static Driver mysqlDriver() throws SQLException {
+        String[] names = {"com.mysql.cj.jdbc.NonRegisteringDriver", "com.mysql.jdbc.NonRegisteringDriver"};
+        for (String name : names) {
+            try {
+                return (Driver) Class.forName(name).getDeclaredConstructor().newInstance();
+            } catch (ClassNotFoundException ignored) {
+            } catch (ReflectiveOperationException ex) {
+                throw new SQLException("Could not load the MySQL driver " + name, ex);
+            }
+        }
+        throw new SQLException("The MYSQL driver is not available on this server. Spigot and Paper ship it; "
+                + "check that your server software has not removed it.");
     }
 
     public void close() {
